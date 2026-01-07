@@ -21,7 +21,8 @@ namespace SimpleDnsTestTool.Server
         {            
             string ipString = Constants.ResolveDnsIp(config);
             int port = int.Parse(Constants.ResolveUdpPort(config));
-            IPEndPoint bindEndPoint = new IPEndPoint(IPAddress.Parse(ipString), port);
+            IPAddress ipAddr = IPAddress.Parse(ipString);
+            IPEndPoint bindEndPoint = new IPEndPoint(ipAddr, port);
             this.recordManager = recordManager;
             var transport = new UdpServerTransport(bindEndPoint);
             this.udpServer = new DnsServer(transport);

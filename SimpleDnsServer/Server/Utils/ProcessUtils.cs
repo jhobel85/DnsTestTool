@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SimpleDnsClient
+namespace SimpleDnsTestTool.Server.Utils
 {
-    public class Utils
+    public class ProcessUtils
     {
         //ipAddress=null then ignore ip address check and return all process ids for the port
         public static HashSet<int> FindServerProcessIDs(int portNr, string? ipAddress = null)
@@ -44,15 +44,33 @@ namespace SimpleDnsClient
                     if (splitResult.Length < 2)
                         continue;
                     string strIpAndPort = splitResult[1];
-                    var ipPortSplit = strIpAndPort.Split(':');
-                    if (ipPortSplit.Length < 2)
+                    string ip = null;
+                    string port = null;
+                    // IPv6: [::1]:53, IPv4: 127.0.0.1:53
+                    int lastColon = strIpAndPort.LastIndexOf(':');
+                    if (lastColon > 0)
+                    {
+                        port = strIpAndPort.Substring(lastColon + 1);
+                        ip = strIpAndPort.Substring(0, lastColon);
+                        // Remove brackets for IPv6
+                        if (ip.StartsWith("[") && ip.EndsWith("]"))
+                            ip = ip.Substring(1, ip.Length - 2);
+                    }
+                    if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(port))
                         continue;
-                    string ip = ipPortSplit[0];
-                    string port = ipPortSplit[1];
                     if (!int.TryParse(port, out int foundPortNr))
                         continue;
 
-                    if (foundPortNr == portNr && (ipAddress == null || ip == ipAddress))
+                    // Normalize IPs for comparison
+                    string normIp = ip;
+                    string normArgIp = ipAddress;
+                    if (!string.IsNullOrEmpty(ipAddress))
+                    {
+                        try { normIp = System.Net.IPAddress.Parse(ip).ToString(); } catch { }
+                        try { normArgIp = System.Net.IPAddress.Parse(ipAddress).ToString(); } catch { }
+                    }
+
+                    if (foundPortNr == portNr && (ipAddress == null || normIp == normArgIp))
                     {
                         string strProcessNr = splitResult[splitResult.Length - 1];
                         if (int.TryParse(strProcessNr, out int intProcessNr))
