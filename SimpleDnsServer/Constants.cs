@@ -9,7 +9,10 @@ public static class Constants
     public const string DNS_ROOT = "/" + DncControllerName;
     //public const int UdpPort = 53; // standard DNS port, but may be blocked by other DNS servers (Windows/Linux/MacOS)
     public const int UdpPort = 10053;
-    public const int ApiPort = 60;
+    public const int ApiPort = 10060;
+
+    //public const int UdpPort_IPv6 = 20053;
+    //public const int ApiPort_IPv6 = 20060;
 
     public const string DNS_IP = "127.0.0.1";
     //public const string IP = "http://localhost";

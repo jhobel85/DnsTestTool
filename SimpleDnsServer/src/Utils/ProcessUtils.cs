@@ -40,12 +40,12 @@ namespace SimpleDnsServer.Utils
                     if (string.IsNullOrWhiteSpace(line))
                         continue;
                     var lineClean = line.Replace("  ", " ");
-                    var splitResult = lineClean.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    var splitResult = lineClean.Split([' '], StringSplitOptions.RemoveEmptyEntries);
                     if (splitResult.Length < 2)
                         continue;
                     string strIpAndPort = splitResult[1];
-                    string ip = null;
-                    string port = null;
+                    string? ip = null;
+                    string? port = null;
                     // IPv6: [::1]:53, IPv4: 127.0.0.1:53
                     int lastColon = strIpAndPort.LastIndexOf(':');
                     if (lastColon > 0)
@@ -63,7 +63,7 @@ namespace SimpleDnsServer.Utils
 
                     // Normalize IPs for comparison
                     string normIp = ip;
-                    string normArgIp = ipAddress;
+                    string? normArgIp = ipAddress;
                     if (!string.IsNullOrEmpty(ipAddress))
                     {
                         try { normIp = System.Net.IPAddress.Parse(ip).ToString(); } catch { }
@@ -103,7 +103,7 @@ namespace SimpleDnsServer.Utils
             try
             {
                 //Turning UAC off (run as admin) and kill process to avoid error: Access is denied
-                ProcessStartInfo processInf = new ProcessStartInfo("cmd")
+                ProcessStartInfo processInf = new("cmd")
                 {
                     UseShellExecute = false,
                     CreateNoWindow = true,

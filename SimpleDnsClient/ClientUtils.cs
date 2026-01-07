@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimpleDnsServer.Tests
 {
-    public static class DnsTestUtils
+    public static class ClientUtils
     {
         public static string SendDnsQueryIPv4(string dns_ip, string domain, int port)
         {

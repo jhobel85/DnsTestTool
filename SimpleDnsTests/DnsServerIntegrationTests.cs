@@ -2,17 +2,25 @@ using SimpleDnsClient;
 
 namespace SimpleDnsServer.Tests
 {
-    public class DnsServerIntegrationTests(DnsServerFixture fixture) : IClassFixture<DnsServerFixture>
+    [Collection("DnsServerIntegration")] // Ensures fixture is shared for all tests in this class
+    public class DnsServerIntegrationTests
     {
+        private readonly DnsServerFixture _fixture;
+    
         private const string TestDomain_V4 = "test.local";
         private const string TestIp_V4 = "192.168.1.100";
 
         private const string TestDomain_V6 = "test6.local";
         private const string TestIp_V6 = "fd00::100";
 
-        private readonly DnsServerFixture _fixture = fixture;
+        public DnsServerIntegrationTests(DnsServerFixture fixture)
+        {
+            _fixture = fixture;
+        }
 
-       // [Fact]
+        // Fixture is injected by xUnit [Collection] and shared for all tests
+
+        [Fact]
         public void RegisterAndResolveDomain_ReturnsCorrectIPv4()
         {
             // Arrange: Register domain (assumes server is already running via fixture)            
@@ -20,11 +28,11 @@ namespace SimpleDnsServer.Tests
             var dnsClient = new RestClient(dns_ip, Constants.ApiPort);            
             dnsClient.Register(TestDomain_V4, TestIp_V4);
             // Act: Send DNS query
-            var resolvedIp = DnsTestUtils.SendDnsQueryIPv4(dns_ip, TestDomain_V4, Constants.UdpPort);
+            var resolvedIp = ClientUtils.SendDnsQueryIPv4(dns_ip, TestDomain_V4, Constants.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIp);
-        }
+        }      
 
         [Fact]
         public void RegisterAndResolveDomain_ReturnsCorrectIPv6()
@@ -35,11 +43,11 @@ namespace SimpleDnsServer.Tests
             dnsClient.Register(TestDomain_V6, TestIp_V6);
 
             // Act: Send DNS query (AAAA record)
-            var resolvedIp = DnsTestUtils.SendDnsQueryIPv6(dns_ip, TestDomain_V6, Constants.UdpPort);
+            var resolvedIp = ClientUtils.SendDnsQueryIPv6(dns_ip, TestDomain_V6, Constants.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V6.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
-        }        
+        } 
     }
     
 }
