@@ -12,8 +12,9 @@ namespace SimpleDnsServer.Tests
 
         public DnsServerFixture()
         {
-            // Kill any running DNS server before starting
-            SimpleDnsClient.Utils.KillAllServers(Constants.UdpPort);
+            // Kill any running DNS server before starting            
+            SimpleDnsClient.Utils.KillAllServers(Constants.UdpPort, Constants.IP);
+            SimpleDnsClient.Utils.KillAllServers(Constants.ApiPort, Constants.IP);
 
             // Path to the server executable
             // Go up from .../SimpleDnsTests/bin/Debug/netX.X/ to solution root
@@ -48,17 +49,9 @@ namespace SimpleDnsServer.Tests
 
         public void Dispose()
         {
-            // Kill any running DNS server after tests
-            SimpleDnsClient.Utils.KillAllServers(Constants.UdpPort);
-            if (_serverProcess != null)
-            {
-                if (!_serverProcess.HasExited)
-                {
-                    _serverProcess.Kill();
-                    _serverProcess.WaitForExit();
-                }
-                _serverProcess.Dispose();
-            }
+            // Kill any running DNS server after tests            
+            SimpleDnsClient.Utils.KillAllServers(Constants.UdpPort, Constants.IP);
+            SimpleDnsClient.Utils.KillAllServers(Constants.ApiPort, Constants.IP);
         }
     }
 }

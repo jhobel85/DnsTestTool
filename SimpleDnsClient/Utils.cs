@@ -9,7 +9,8 @@ namespace SimpleDnsClient
 {
     public class Utils
     {
-        public static HashSet<int> FindServerProcessIDs(int portNr)
+        //ipAddress=null then ignore ip address check and return all process ids for the port
+        public static HashSet<int> FindServerProcessIDs(int portNr, string? ipAddress = null)
         {
             HashSet<int> ret = new HashSet<int>();
             //Using the /C argument, you can give it the command what you want to execute
@@ -36,18 +37,27 @@ namespace SimpleDnsClient
                 while (!stdOut.EndOfStream)
                 {
                     var line = stdOut.ReadLine();
-                    var lineClean = line?.Replace("  ", " ");
-                    var splitResult = lineClean?.Split(" ");
-                    if (splitResult != null && splitResult.Length > 0)
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+                    var lineClean = line.Replace("  ", " ");
+                    var splitResult = lineClean.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (splitResult.Length < 2)
+                        continue;
+                    string strIpAndPort = splitResult[1];
+                    var ipPortSplit = strIpAndPort.Split(':');
+                    if (ipPortSplit.Length < 2)
+                        continue;
+                    string ip = ipPortSplit[0];
+                    string port = ipPortSplit[1];
+                    if (!int.TryParse(port, out int foundPortNr))
+                        continue;
+
+                    if (foundPortNr == portNr && (ipAddress == null || ip == ipAddress))
                     {
-                        string strIpAndPort = splitResult[1];
-                        string port = strIpAndPort.Split(":")[1];
-                        _ = int.TryParse(port, out int foundPortNr);
-                        if (foundPortNr == portNr)
+                        string strProcessNr = splitResult[splitResult.Length - 1];
+                        if (int.TryParse(strProcessNr, out int intProcessNr))
                         {
-                            string strProcessNr = splitResult[splitResult.Length - 1];
-                            _ = int.TryParse(strProcessNr, out int intProcessNr);                            
-                            ret.Add((int)intProcessNr);                            
+                            ret.Add(intProcessNr);
                         }
                     }
                 }
@@ -97,10 +107,10 @@ namespace SimpleDnsClient
             return ret;
         }
 
-        public static bool KillAllServers(int portNr)
+        public static bool KillAllServers(int portNr, string? ipAddress = null)
         {
             bool ret = true;
-            foreach (var procId in FindServerProcessIDs(portNr))
+            foreach (var procId in FindServerProcessIDs(portNr, ipAddress))
             {
                 ret &= KillProcessAsAdmin(procId);
             }
