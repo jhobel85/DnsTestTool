@@ -1,64 +1,61 @@
-﻿using System;
-using System.Collections.Generic;
-
-#nullable enable
+﻿#nullable enable
 namespace SimpleDnsServer
 {
     public class DnsRecordManger
     {
-        private Dictionary<string, string> records = new Dictionary<string, string>();
-        private Dictionary<string, List<string>> sessions = new Dictionary<string, List<string>>();
+        private readonly Dictionary<string, string> records = [];
+        private readonly Dictionary<string, List<string>> sessions = [];
 
         public DnsRecordManger() => Console.WriteLine("Server new instance");
 
         public void Register(string domain, string ip, string? sessionId = null)
         {
-            this.records[domain] = ip;
+            records[domain] = ip;
             if (sessionId == null)
                 return;
-            this.AddSessionItem(sessionId, domain);
+            AddSessionItem(sessionId, domain);
         }
 
-        public void Unregister(string domain) => this.records.Remove(domain);
+        public void Unregister(string domain) => records.Remove(domain);
 
-        public string Resolve(string domain)
+        public string? Resolve(string domain)
         {
-            foreach (string key in this.records.Keys)
+            foreach (string key in records.Keys)
             {
                 if (domain.StartsWith(key))
                 {
                     string str = domain.Substring(key.Length);
                     if (str.Length == 0 || str.StartsWith("."))
-                        return this.records[key];
-                }
+                        return records[key];
+                }                                
             }
-            return (string)null;
+            return null;
         }
 
         public int GetCount() => this.records.Count;
 
         public int GetSessionCount(string sessionId)
         {
-            return !this.sessions.ContainsKey(sessionId) ? 0 : this.sessions[sessionId].Count;
+            return !sessions.TryGetValue(sessionId, out List<string>? value) ? 0 : value.Count;
         }
 
         public void UnregisterSession(string sessionId)
         {
-            if (!this.sessions.ContainsKey(sessionId))
+            if (!sessions.TryGetValue(sessionId, out List<string>? value))
                 return;
-            foreach (string key in this.sessions[sessionId])
-                this.records.Remove(key);
-            this.sessions.Remove(sessionId);
+            foreach (string key in value)
+                records.Remove(key);
+            sessions.Remove(sessionId);
         }
 
-        public void UnregisterAll() => this.records.Clear();
+        public void UnregisterAll() => records.Clear();
 
         private void AddSessionItem(string key, string domain)
         {
-            if (this.sessions.ContainsKey(key))
-                this.sessions[key].Add(domain);
+            if (sessions.TryGetValue(key, out List<string>? value))
+                value.Add(domain);
             else
-                this.sessions[key] = new List<string>() { domain };
+                sessions[key] = new List<string>() { domain };
         }
     }
 }

@@ -6,10 +6,18 @@ namespace SimpleDnsServer.Utils
     {
         private static string GetServerExecutablePath()
         {            
-            var testBinDir = AppDomain.CurrentDomain.BaseDirectory; //SimpleDnsTests/bin/Debug/net8.0            
-            var solutionRoot = Directory.GetParent(testBinDir).Parent.Parent.Parent.Parent.FullName; // to solution root (SimpleDnsTestTool)
-            string proc_name = Constants.DNS_SERVER_PROCESS_NAME + ".exe";
-            var ret = Path.Combine(solutionRoot, "SimpleDnsServer", "bin", "Debug", Constants.FRAMEWORK, proc_name);
+            var testBinDir = AppDomain.CurrentDomain.BaseDirectory; // SimpleDnsTests/bin/Debug/net8.0
+            // Safely traverse up 4 parent directories to reach solution root
+            var dir = new DirectoryInfo(testBinDir);
+            for (int i = 0; i < 4; i++)
+            {
+                if (dir.Parent == null)
+                    throw new DirectoryNotFoundException($"Could not find solution root from testBinDir. Problem at: {dir.FullName}");
+                dir = dir.Parent;
+            }
+            var solutionRoot = dir.FullName; // to solution root (SimpleDnsTestTool)
+            string proc_name = DnsConst.DNS_SERVER_PROCESS_NAME + ".exe";
+            var ret = Path.Combine(solutionRoot, "SimpleDnsServer", "bin", "Debug", DnsConst.FRAMEWORK, proc_name);
             if (!File.Exists(ret))
                 throw new FileNotFoundException($"Could not find server executable at {ret}");
             return ret;
@@ -18,7 +26,7 @@ namespace SimpleDnsServer.Utils
         public static void StartDnsServer()
         {                   
             var serverExe = GetServerExecutablePath();
-            StartDnsServer(serverExe, Constants.DNS_IP, Constants.ApiPort, Constants.UdpPort);
+            StartDnsServer(serverExe, DnsConst.DNS_IP, DnsConst.ApiPort, DnsConst.UdpPort);
         }
 
         public static void StartDnsServer(String ip, int apiPort, int udpPort)

@@ -1,11 +1,9 @@
 using SimpleDnsClient;
 
 namespace SimpleDnsServer.Tests
-{
-    [Collection("DnsServerIntegration")] // Ensures fixture is shared for all tests in this class
-    public class DnsServerIntegrationTests
+{   
+    public class DnsServerIntegrationTests(DnsServerFixture fixture) : IClassFixture<DnsServerFixture>
     {
-        private readonly DnsServerFixture _fixture;
     
         private const string TestDomain_V4 = "test.local";
         private const string TestIp_V4 = "192.168.1.100";
@@ -13,41 +11,44 @@ namespace SimpleDnsServer.Tests
         private const string TestDomain_V6 = "test6.local";
         private const string TestIp_V6 = "fd00::100";
 
-        public DnsServerIntegrationTests(DnsServerFixture fixture)
-        {
-            _fixture = fixture;
-        }
+        private readonly DnsServerFixture _fixture = fixture;        
 
-        // Fixture is injected by xUnit [Collection] and shared for all tests
 
         [Fact]
-        public void RegisterAndResolveDomain_ReturnsCorrectIPv4()
+        public async Task SequentialTests()
         {
-            // Arrange: Register domain (assumes server is already running via fixture)            
-            string dns_ip = Constants.DNS_IP;
-            var dnsClient = new RestClient(dns_ip, Constants.ApiPort);            
-            dnsClient.Register(TestDomain_V4, TestIp_V4);
+            await RegisterAndResolveDomain_ReturnsCorrectIPv4();
+            await RegisterAndResolveDomain_ReturnsCorrectIPv6();
+        }
+
+
+        private async Task RegisterAndResolveDomain_ReturnsCorrectIPv4()
+        {
+            // Arrange: Register domain (assumes server is already running via fixture)
+            string dns_ip = DnsConst.DNS_IP;
+            var dnsClient = new RestClient(dns_ip, DnsConst.ApiPort);
+            await dnsClient.RegisterAsync(TestDomain_V4, TestIp_V4);
             // Act: Send DNS query
-            var resolvedIp = ClientUtils.SendDnsQueryIPv4(dns_ip, TestDomain_V4, Constants.UdpPort);
+            var resolvedIp = ClientUtils.SendDnsQueryIPv4(dns_ip, TestDomain_V4, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIp);
-        }      
+        }
 
-        [Fact]
-        public void RegisterAndResolveDomain_ReturnsCorrectIPv6()
+
+        private async Task RegisterAndResolveDomain_ReturnsCorrectIPv6()
         {
             // Arrange: Register domain (assumes server is already running via fixture)
-            string dns_ip = Constants.DNS_IPv6;
-            var dnsClient = new RestClient(dns_ip, Constants.ApiPort, useIPv6: true);
-            dnsClient.Register(TestDomain_V6, TestIp_V6);
+            string dns_ip = DnsConst.DNS_IPv6;
+            var dnsClient = new RestClient(dns_ip, DnsConst.ApiPort, useIPv6: true);
+            await dnsClient.RegisterAsync(TestDomain_V6, TestIp_V6);
 
             // Act: Send DNS query (AAAA record)
-            var resolvedIp = ClientUtils.SendDnsQueryIPv6(dns_ip, TestDomain_V6, Constants.UdpPort);
+            var resolvedIp = ClientUtils.SendDnsQueryIPv6(dns_ip, TestDomain_V6, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V6.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
-        } 
+        }
     }
     
 }

@@ -12,8 +12,8 @@ public class DnsUdpListener : BackgroundService
 
     public DnsUdpListener(DnsRecordManger recordManager, IConfiguration config)
     {            
-        string ipString = Constants.ResolveDnsIp(config);
-        int port = int.Parse(Constants.ResolveUdpPort(config));
+        string ipString = DnsConst.ResolveDnsIp(config);
+        int port = int.Parse(DnsConst.ResolveUdpPort(config));
         this.recordManager = recordManager;
 
         // Best effort dual-stack: bind both IPv4 and IPv6 endpoints
@@ -28,11 +28,20 @@ public class DnsUdpListener : BackgroundService
         if (!stoppingToken.IsCancellationRequested)
             udpServer.Start();
         else
-            udpServer.Stop();            
+            udpServer.Stop();
+
+        // Keep the background service alive until cancellation is requested
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await Task.Delay(1000, stoppingToken);
+        }
     }
 
     private async Task OnQueryReceived(object sender, QueryReceivedEventArgs e)
     {
+        // This yields control to the caller to satisfy the async method contract.
+        // It does not perform any real asynchronous work, but prevents compiler warnings.
+        await Task.Yield();
         if (e.Query is not DnsMessage query)
             return;
         logDnsMessageQuestions(query);
@@ -40,7 +49,7 @@ public class DnsUdpListener : BackgroundService
         if (query.Questions.Count == 1)
         {
             string str = query.Questions[0].Name.ToString();
-            string ipString = recordManager.Resolve(str);
+            string? ipString = recordManager.Resolve(str);
             if (ipString != null)
             {
                 responseInstance.ReturnCode = ReturnCode.NoError;
@@ -70,7 +79,7 @@ public class DnsUdpListener : BackgroundService
         e.Response = (DnsMessageBase)responseInstance;
     }
 
-    public virtual void Dispose()
+    public override void Dispose()
     {
         base.Dispose();
         udpServer?.Stop();

@@ -10,7 +10,9 @@ namespace SimpleDnsServer
         public void ConfigureServices(IServiceCollection services)
         {
             ServiceCollectionServiceExtensions.AddSingleton<DnsRecordManger>(services);
+            #pragma warning disable IL2026
             MvcServiceCollectionExtensions.AddControllers(services);
+            #pragma warning restore IL2026
             ServiceCollectionHostedServiceExtensions.AddHostedService<DnsUdpListener>(services);
         }
 
