@@ -27,8 +27,8 @@ namespace SimpleDnsServer.Tests
             await dnsClientV6.RegisterAsync(TestDomain_V6, TestIp_V6);
 
             // Act
-            var resolvedIpV4 = ClientUtils.SendDnsQueryIPv4(dns_ip_v4, TestDomain_V4, DnsConst.UdpPort);
-            var resolvedIpV6 = ClientUtils.SendDnsQueryIPv6(dns_ip_v6, TestDomain_V6, DnsConst.UdpPort);
+            var resolvedIpV4 = await ClientUtils.SendDnsQueryIPv4Async(dns_ip_v4, TestDomain_V4, DnsConst.UdpPort);
+            var resolvedIpV6 = await ClientUtils.SendDnsQueryIPv6Async(dns_ip_v6, TestDomain_V6, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIpV4);
@@ -37,19 +37,27 @@ namespace SimpleDnsServer.Tests
 
         [Fact]
         public async Task RegisterAndResolve_MultipleIPv4AndIPv6_Success()
-        {
+        {            
             // Arrange
             var ipv4Domains = new[]
             {
                 (domain: "multi4a.local", ip: "192.168.1.111"),
                 (domain: "multi4b.local", ip: "192.168.1.112"),
-                (domain: "multi4c.local", ip: "192.168.1.113")
+                (domain: "multi4c.local", ip: "192.168.1.113"),
+                (domain: "multi4d.local", ip: "192.168.1.114"),
+                (domain: "multi4e.local", ip: "192.168.1.115"),
+                (domain: "multi4f.local", ip: "192.168.1.116"),
+                (domain: "multi4g.local", ip: "192.168.1.117")
             };
             var ipv6Domains = new[]
             {
                 (domain: "multi6a.local", ip: "fd00::111"),
                 (domain: "multi6b.local", ip: "fd00::112"),
-                //(domain: "multi6c.local", ip: "fd00::113")
+                (domain: "multi6c.local", ip: "fd00::113"),
+                (domain: "multi6d.local", ip: "fd00::114"),
+                (domain: "multi6e.local", ip: "fd00::115"),
+                (domain: "multi6f.local", ip: "fd00::116"),
+                (domain: "multi6g.local", ip: "fd00::117")
             };
 
             string dns_ip_v4 = DnsConst.DNS_IP;
@@ -64,25 +72,70 @@ namespace SimpleDnsServer.Tests
 
             try
             {
-                // Act & Assert: Resolve all IPv4
-                foreach (var (domain, ip) in ipv4Domains)
+                // Act & Assert: Resolve all in parallel with a small delay between requests
+                var v4Tasks = new List<Task>();
+                foreach (var d in ipv4Domains)
                 {
-                    var resolvedIp = ClientUtils.SendDnsQueryIPv4(dns_ip_v4, domain, DnsConst.UdpPort);
-                    Assert.Equal(ip, resolvedIp);
+                    v4Tasks.Add(Task.Run(async () =>
+                    {
+                        var cts = new CancellationTokenSource(5000);
+                        var resolvedIp = await ClientUtils.SendDnsQueryIPv4Async(dns_ip_v4, d.domain, DnsConst.UdpPort, cts.Token);
+                        Assert.Equal(d.ip, resolvedIp);
+                    }));
+                    //await Task.Delay(1); // 1ms delay between requests
                 }
-                // Act & Assert: Resolve all IPv6
-                foreach (var (domain, ip) in ipv6Domains)
+
+                var v6Tasks = new List<Task>();
+                foreach (var d in ipv6Domains)
                 {
-                    var resolvedIp = ClientUtils.SendDnsQueryIPv6(dns_ip_v6, domain, DnsConst.UdpPort);
-                    Assert.Equal(ip.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
+                    v6Tasks.Add(Task.Run(async () =>
+                    {
+                        var cts = new CancellationTokenSource(5000);
+                        var resolvedIp = await ClientUtils.SendDnsQueryIPv6Async(dns_ip_v6, d.domain, DnsConst.UdpPort, cts.Token);
+                        Assert.Equal(d.ip.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
+                    }));
+                    //await Task.Delay(1); // 1ms delay between requests
                 }
+
+                await Task.WhenAll(v4Tasks.Concat(v6Tasks));
             }
             finally
             {
                 // Cleanup: Unregister all test domains to avoid polluting server state
-                var unregisterTasks = ipv4Domains.Select(d => dnsClientV4.UnregisterAsync(d.domain))
-                    .Concat(ipv6Domains.Select(d => dnsClientV6.UnregisterAsync(d.domain)));
-                await Task.WhenAll(unregisterTasks);
+                // Optional feature - test should pass anyway                
+                var unregisterTasks = ipv4Domains.Select(d =>
+                {
+                    try
+                    {
+                        return dnsClientV4.UnregisterAsync(d.domain).WaitAsync(TimeSpan.FromSeconds(5));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"UnregisterAsync failed for {d.domain}: {ex.Message}");
+                        return Task.CompletedTask;
+                    }
+                })
+                .Concat(ipv6Domains.Select(d =>
+                {
+                    try
+                    {
+                        return dnsClientV6.UnregisterAsync(d.domain).WaitAsync(TimeSpan.FromSeconds(5));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"UnregisterAsync failed for {d.domain}: {ex.Message}");
+                        return Task.CompletedTask;
+                    }
+                }));
+                try
+                {
+                    await Task.WhenAll(unregisterTasks);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Unregister cleanup failed: {ex.Message}");
+                }
+                
             }
         }
     }

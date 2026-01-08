@@ -22,7 +22,7 @@ namespace SimpleDnsServer.Tests
             var dnsClient = new RestClient(dns_ip, DnsConst.ApiPort);
             await dnsClient.RegisterAsync(TestDomain_V4, TestIp_V4);
             // Act: Send DNS query
-            var resolvedIp = ClientUtils.SendDnsQueryIPv4(dns_ip, TestDomain_V4, DnsConst.UdpPort);
+            var resolvedIp = await ClientUtils.SendDnsQueryIPv4Async(dns_ip, TestDomain_V4, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIp);
@@ -37,7 +37,7 @@ namespace SimpleDnsServer.Tests
             await dnsClient.RegisterAsync(TestDomain_V6, TestIp_V6);
 
             // Act: Send DNS query (AAAA record)
-            var resolvedIp = ClientUtils.SendDnsQueryIPv6(dns_ip, TestDomain_V6, DnsConst.UdpPort);
+            var resolvedIp = await ClientUtils.SendDnsQueryIPv6Async(dns_ip, TestDomain_V6, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V6.ToLowerInvariant(), resolvedIp.ToLowerInvariant());

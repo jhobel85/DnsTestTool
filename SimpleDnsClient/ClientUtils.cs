@@ -3,29 +3,65 @@ using System.Net.Sockets;
 using System.Text;
 
 namespace SimpleDnsServer.Tests
-{
+{    
     public static class ClientUtils
     {
-        public static string SendDnsQueryIPv4(string dns_ip, string domain, int port)
-        {
-            using var client = new UdpClient();
-            client.Connect(dns_ip, port);
-            var query = BuildDnsQuery(domain);
-            client.Send(query, query.Length);
-            IPEndPoint remoteEP = new (IPAddress.Any, 0);
-            var response = client.Receive(ref remoteEP);
-            return ParseDnsResponseForARecord(response);
-        }
+        public const int ClientTimeout = 5000;
 
-        public static string SendDnsQueryIPv6(string dns_ip, string domain, int port)
+            public static async Task<string> SendDnsQueryIPv4Async(string dns_ip, string domain, int port, CancellationToken cancellationToken = default)
+            {
+                using var client = new UdpClient();
+                client.Connect(dns_ip, port);
+                var query = BuildDnsQuery(domain);
+                await client.SendAsync(query, query.Length);
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cts.CancelAfter(ClientTimeout);
+                var receiveTask = client.ReceiveAsync(); // start the receive, then await its completion (or timeout) further.
+                try
+                {
+                    var completedTask = await Task.WhenAny(receiveTask, Task.Delay(Timeout.Infinite, cts.Token));
+                    if (completedTask == receiveTask)
+                    {
+                        var result = await receiveTask;
+                        return ParseDnsResponseForARecord(result.Buffer);
+                    }
+                    else
+                    {
+                        throw new TimeoutException($"DNS query for {domain} timed out.");
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw new TimeoutException($"DNS query for {domain} timed out.");
+                }
+            }
+
+        public static async Task<string> SendDnsQueryIPv6Async(string dns_ip, string domain, int port, CancellationToken cancellationToken = default)
         {
             using var client = new UdpClient(AddressFamily.InterNetworkV6);
             client.Connect(dns_ip, port);
             var query = BuildDnsQueryAAAA(domain);
-            client.Send(query, query.Length);
-            IPEndPoint remoteEP = new(IPAddress.IPv6Any, 0);
-            var response = client.Receive(ref remoteEP);
-            return ParseDnsResponseForAAAARecord(response);
+            await client.SendAsync(query, query.Length);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(ClientTimeout);
+            var receiveTask = client.ReceiveAsync();
+            try
+            {
+                var completedTask = await Task.WhenAny(receiveTask, Task.Delay(Timeout.Infinite, cts.Token));
+                if (completedTask == receiveTask)
+                {
+                    var result = await receiveTask;
+                    return ParseDnsResponseForAAAARecord(result.Buffer);
+                }
+                else
+                {
+                    throw new TimeoutException($"DNS query for {domain} timed out.");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw new TimeoutException($"DNS query for {domain} timed out.");
+            }
         }
 
         public static byte[] BuildDnsQuery(string domain)

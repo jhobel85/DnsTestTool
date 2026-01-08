@@ -10,9 +10,12 @@
         public const string DNS_ROOT = "/" + DncControllerName;
         public const int UdpPort = 53;
         public const int ApiPort = 60;
-
+                
         //public const int UdpPort_IPv6 = 10053;
         //public const int ApiPort_IPv6 = 10060;
+
+        // Try to increase UDP socket buffer size using reflection (ARSoft.Tools.Net does not expose Socket)
+        public const int UDP_BUFFER = 8 * 1024 * 1024; //8MB
 
         public const string DNS_IP = "127.0.0.1";
         //public const string IP = "http://localhost";

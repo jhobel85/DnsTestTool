@@ -1,12 +1,14 @@
 ﻿using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
 using System.Net;
+using System.Net.Sockets;
 
 #nullable enable
 namespace SimpleDnsServer;
 
 
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 public class DnsUdpListener : BackgroundService
 {
@@ -15,31 +17,34 @@ public class DnsUdpListener : BackgroundService
     // Limit the number of concurrent DNS query handlers (tune as needed)
     private static readonly SemaphoreSlim QuerySemaphore = new(16); // e.g., max 16 concurrent queries
 
-    public DnsUdpListener(DnsRecordManger recordManager, IConfiguration config)
+    private readonly ILogger<DnsUdpListener> _logger;
+
+    public DnsUdpListener(DnsRecordManger recordManager, IConfiguration config, ILogger<DnsUdpListener> logger)
     {            
         string ipString = DnsConst.ResolveDnsIp(config);
         int port = int.Parse(DnsConst.ResolveUdpPort(config));
         this.recordManager = recordManager;
+        _logger = logger;
 
         // Best effort dual-stack: bind both IPv4 and IPv6 endpoints
         var transportV4 = new UdpServerTransport(new IPEndPoint(IPAddress.Any, port));
         var transportV6 = new UdpServerTransport(new IPEndPoint(IPAddress.IPv6Any, port));
-
-        // Try to increase UDP socket buffer size using reflection (ARSoft.Tools.Net does not expose Socket)
+        
         try
         {
             var socketField = typeof(UdpServerTransport).GetField("_udpClient", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (socketField != null)
             {
-                var udpClientV4 = socketField.GetValue(transportV4) as System.Net.Sockets.UdpClient;
-                var udpClientV6 = socketField.GetValue(transportV6) as System.Net.Sockets.UdpClient;
-                udpClientV4?.Client.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReceiveBuffer, 1024 * 1024);
-                udpClientV6?.Client.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReceiveBuffer, 1024 * 1024);
+                var udpClientV4 = socketField.GetValue(transportV4) as UdpClient;
+                var udpClientV6 = socketField.GetValue(transportV6) as UdpClient;
+                
+                udpClientV4?.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, DnsConst.UDP_BUFFER);
+                udpClientV6?.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, DnsConst.UDP_BUFFER);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[DnsUdpListener] Could not set UDP socket buffer size: {ex.Message}");
+            _logger.LogError(ex, "[DnsUdpListener] Could not set UDP socket buffer size");
         }
 
         udpServer = new DnsServer([transportV4, transportV6]);
@@ -72,7 +77,7 @@ public class DnsUdpListener : BackgroundService
                 {
                     if (e.Query is not DnsMessage query)
                         return;
-                    logDnsMessageQuestions(query);
+                    _logger.LogDebug($"Received DNS query: {query.Questions.FirstOrDefault()?.Name}");
                     DnsMessage responseInstance = query.CreateResponseInstance();
                     if (query.Questions.Count == 1)
                     {
@@ -103,12 +108,12 @@ public class DnsUdpListener : BackgroundService
                     {
                         responseInstance.ReturnCode = ReturnCode.ServerFailure;
                     }
-                    logDnsMessageAnswers(responseInstance);
+                    _logger.LogDebug($"DNS response: {responseInstance.AnswerRecords.Count} answers");
                     e.Response = (DnsMessageBase)responseInstance;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[DnsUdpListener] Exception in query handler: {ex}");
+                    _logger.LogError(ex, "[DnsUdpListener] Exception in query handler");
                 }
             });
         }
@@ -124,39 +129,9 @@ public class DnsUdpListener : BackgroundService
         udpServer?.Stop();
     }
 
-    private void LogMessageHeader(DnsMessage message)
-    {
-        Console.WriteLine(string.Format("ID: {0}", (object)message.TransactionID));
-        Console.WriteLine(string.Format("Operation Code: {0}", (object)message.OperationCode));
-        Console.WriteLine(string.Format("Is Query: {0}", (object)message.IsQuery));
-        Console.WriteLine(string.Format("Is Recursion Desired: {0}", (object)message.IsRecursionDesired));
-        Console.WriteLine(string.Format("Is Checking Disabled: {0}", (object)message.IsCheckingDisabled));
-        Console.WriteLine(string.Format("Is Authentic Data: {0}", (object)message.IsAuthenticData));
-    }
+    // Logging header removed for performance
 
-    public void logDnsMessageQuestions(DnsMessage message)
-    {
-        Console.WriteLine("Questions:");
-        LogMessageHeader(message);
-        foreach (DnsQuestion question in message.Questions)
-        {
-            Console.WriteLine(string.Format("Questions Name: {0}", (object)question.Name));
-            Console.WriteLine(string.Format("Questions Record Type: {0}", (object)question.RecordType));
-            Console.WriteLine(string.Format("Questions Record Class: {0}", (object)question.RecordClass));
-        }
-    }
+    // Logging questions removed for performance
 
-    public void logDnsMessageAnswers(DnsMessage message)
-    {
-        Console.WriteLine("Answers:");
-        LogMessageHeader(message);
-        foreach (DnsRecordBase answerRecord in message.AnswerRecords)
-        {
-            Console.WriteLine(string.Format("Answer Name: {0}", (object)answerRecord.Name));
-            Console.WriteLine(string.Format("Answer Record Type: {0}", (object)answerRecord.RecordType));
-            if (answerRecord.RecordType == RecordType.A)
-                Console.WriteLine(string.Format("Answer Ip adrress: {0}", (object)((AddressRecordBase)answerRecord).Address));
-            Console.WriteLine(string.Format("Answer Time to Live: {0}", (object)answerRecord.TimeToLive));
-        }
-    }
+    // Logging answers removed for performance
 }
