@@ -5,10 +5,15 @@ using System.Net;
 #nullable enable
 namespace SimpleDnsServer;
 
+
+using System.Threading;
+
 public class DnsUdpListener : BackgroundService
 {
     private readonly DnsServer udpServer;
     private readonly DnsRecordManger recordManager;
+    // Limit the number of concurrent DNS query handlers (tune as needed)
+    private static readonly SemaphoreSlim QuerySemaphore = new(16); // e.g., max 16 concurrent queries
 
     public DnsUdpListener(DnsRecordManger recordManager, IConfiguration config)
     {            
@@ -19,6 +24,24 @@ public class DnsUdpListener : BackgroundService
         // Best effort dual-stack: bind both IPv4 and IPv6 endpoints
         var transportV4 = new UdpServerTransport(new IPEndPoint(IPAddress.Any, port));
         var transportV6 = new UdpServerTransport(new IPEndPoint(IPAddress.IPv6Any, port));
+
+        // Try to increase UDP socket buffer size using reflection (ARSoft.Tools.Net does not expose Socket)
+        try
+        {
+            var socketField = typeof(UdpServerTransport).GetField("_udpClient", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (socketField != null)
+            {
+                var udpClientV4 = socketField.GetValue(transportV4) as System.Net.Sockets.UdpClient;
+                var udpClientV6 = socketField.GetValue(transportV6) as System.Net.Sockets.UdpClient;
+                udpClientV4?.Client.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReceiveBuffer, 1024 * 1024);
+                udpClientV6?.Client.SetSocketOption(System.Net.Sockets.SocketOptionLevel.Socket, System.Net.Sockets.SocketOptionName.ReceiveBuffer, 1024 * 1024);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DnsUdpListener] Could not set UDP socket buffer size: {ex.Message}");
+        }
+
         udpServer = new DnsServer([transportV4, transportV6]);
         udpServer.QueryReceived += new AsyncEventHandler<QueryReceivedEventArgs>(OnQueryReceived);
     }
@@ -39,44 +62,60 @@ public class DnsUdpListener : BackgroundService
 
     private async Task OnQueryReceived(object sender, QueryReceivedEventArgs e)
     {
-        // This yields control to the caller to satisfy the async method contract.
-        // It does not perform any real asynchronous work, but prevents compiler warnings.
-        await Task.Yield();
-        if (e.Query is not DnsMessage query)
-            return;
-        logDnsMessageQuestions(query);
-        DnsMessage responseInstance = query.CreateResponseInstance();
-        if (query.Questions.Count == 1)
+        // Limit concurrency and add exception handling
+        await QuerySemaphore.WaitAsync();
+        try
         {
-            string str = query.Questions[0].Name.ToString();
-            string? ipString = recordManager.Resolve(str);
-            if (ipString != null)
+            await Task.Run(() =>
             {
-                responseInstance.ReturnCode = ReturnCode.NoError;
-                if (query.Questions[0].RecordType == RecordType.A)
+                try
                 {
-                    responseInstance.AnswerRecords.Add(new ARecord(DomainName.Parse(str), 3600, IPAddress.Parse(ipString)));
+                    if (e.Query is not DnsMessage query)
+                        return;
+                    logDnsMessageQuestions(query);
+                    DnsMessage responseInstance = query.CreateResponseInstance();
+                    if (query.Questions.Count == 1)
+                    {
+                        string str = query.Questions[0].Name.ToString();
+                        string? ipString = recordManager.Resolve(str);
+                        if (ipString != null)
+                        {
+                            responseInstance.ReturnCode = ReturnCode.NoError;
+                            if (query.Questions[0].RecordType == RecordType.A)
+                            {
+                                responseInstance.AnswerRecords.Add(new ARecord(DomainName.Parse(str), 3600, IPAddress.Parse(ipString)));
+                            }
+                            else if (query.Questions[0].RecordType == RecordType.Aaaa)
+                            {
+                                responseInstance.AnswerRecords.Add(new AaaaRecord(DomainName.Parse(str), 3600, IPAddress.Parse(ipString)));
+                            }
+                            else
+                            {
+                                responseInstance.ReturnCode = ReturnCode.ServerFailure;
+                            }
+                        }
+                        else
+                        {
+                            responseInstance.ReturnCode = ReturnCode.NxDomain;
+                        }
+                    }
+                    else
+                    {
+                        responseInstance.ReturnCode = ReturnCode.ServerFailure;
+                    }
+                    logDnsMessageAnswers(responseInstance);
+                    e.Response = (DnsMessageBase)responseInstance;
                 }
-                else if (query.Questions[0].RecordType == RecordType.Aaaa)
+                catch (Exception ex)
                 {
-                    responseInstance.AnswerRecords.Add(new AaaaRecord(DomainName.Parse(str), 3600, IPAddress.Parse(ipString)));
+                    Console.WriteLine($"[DnsUdpListener] Exception in query handler: {ex}");
                 }
-                else
-                {
-                    responseInstance.ReturnCode = ReturnCode.ServerFailure;
-                }
-            }
-            else
-            {
-                responseInstance.ReturnCode = ReturnCode.NxDomain;
-            }
+            });
         }
-        else
+        finally
         {
-            responseInstance.ReturnCode = ReturnCode.ServerFailure;
+            QuerySemaphore.Release();
         }
-        logDnsMessageAnswers(responseInstance);
-        e.Response = (DnsMessageBase)responseInstance;
     }
 
     public override void Dispose()

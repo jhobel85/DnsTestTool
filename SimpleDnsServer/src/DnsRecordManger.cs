@@ -1,10 +1,13 @@
 ﻿#nullable enable
 namespace SimpleDnsServer
 {
+    using System.Collections.Concurrent;
+
     public class DnsRecordManger
     {
-        private readonly Dictionary<string, string> records = [];
-        private readonly Dictionary<string, List<string>> sessions = [];
+        private readonly ConcurrentDictionary<string, string> records = new();
+        private readonly ConcurrentDictionary<string, ConcurrentBag<string>> sessions = new();
+        private readonly object sessionLock = new();
 
         public DnsRecordManger() => Console.WriteLine("Server new instance");
 
@@ -16,18 +19,20 @@ namespace SimpleDnsServer
             AddSessionItem(sessionId, domain);
         }
 
-        public void Unregister(string domain) => records.Remove(domain);
+        public void Unregister(string domain) => records.TryRemove(domain, out _);
 
         public string? Resolve(string domain)
         {
-            foreach (string key in records.Keys)
+            // Use snapshot to avoid enumeration issues
+            foreach (var kvp in records.ToArray())
             {
+                string key = kvp.Key;
                 if (domain.StartsWith(key))
                 {
                     string str = domain.Substring(key.Length);
                     if (str.Length == 0 || str.StartsWith("."))
-                        return records[key];
-                }                                
+                        return kvp.Value;
+                }
             }
             return null;
         }
@@ -36,26 +41,32 @@ namespace SimpleDnsServer
 
         public int GetSessionCount(string sessionId)
         {
-            return !sessions.TryGetValue(sessionId, out List<string>? value) ? 0 : value.Count;
+            return !sessions.TryGetValue(sessionId, out var value) ? 0 : value.Count;
         }
 
         public void UnregisterSession(string sessionId)
         {
-            if (!sessions.TryGetValue(sessionId, out List<string>? value))
-                return;
-            foreach (string key in value)
-                records.Remove(key);
-            sessions.Remove(sessionId);
+            lock (sessionLock)
+            {
+                if (!sessions.TryGetValue(sessionId, out var value))
+                    return;
+                foreach (string key in value)
+                    records.TryRemove(key, out _);
+                sessions.TryRemove(sessionId, out _);
+            }
         }
 
-        public void UnregisterAll() => records.Clear();
+        public void UnregisterAll()
+        {
+            records.Clear();
+            sessions.Clear();
+        }
 
         private void AddSessionItem(string key, string domain)
         {
-            if (sessions.TryGetValue(key, out List<string>? value))
-                value.Add(domain);
-            else
-                sessions[key] = new List<string>() { domain };
+            sessions.AddOrUpdate(key,
+                _ => new ConcurrentBag<string> { domain },
+                (_, bag) => { bag.Add(domain); return bag; });
         }
     }
 }

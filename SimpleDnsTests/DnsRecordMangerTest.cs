@@ -2,8 +2,8 @@ using Xunit;
 using SimpleDnsServer;
 
 namespace SimpleDnsTests
-{
-    public class DnsRecordMangerTests
+{   
+    public class DnsRecordMangerTest
     {
         [Fact]
         public void CanRegisterAndResolveDomain()
@@ -13,5 +13,5 @@ namespace SimpleDnsTests
             var ip = manager.Resolve("example.com");
             Assert.Equal("1.2.3.4", ip);
         }
-    }
+    }    
 }

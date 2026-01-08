@@ -1,8 +1,8 @@
 using SimpleDnsClient;
 
 namespace SimpleDnsServer.Tests
-{   
-    public class DnsServerIntegrationTests(DnsServerFixture fixture) : IClassFixture<DnsServerFixture>
+{
+    public class DnsServerIntegrationTest(DnsServerFixture fixture) : IClassFixture<DnsServerFixture>
     {
     
         private const string TestDomain_V4 = "test.local";
@@ -15,14 +15,7 @@ namespace SimpleDnsServer.Tests
 
 
         [Fact]
-        public async Task SequentialTests()
-        {
-            await RegisterAndResolveDomain_ReturnsCorrectIPv4();
-            await RegisterAndResolveDomain_ReturnsCorrectIPv6();
-        }
-
-
-        private async Task RegisterAndResolveDomain_ReturnsCorrectIPv4()
+        public async Task RegisterAndResolveDomain_ReturnsCorrectIPv4()
         {
             // Arrange: Register domain (assumes server is already running via fixture)
             string dns_ip = DnsConst.DNS_IP;
@@ -35,8 +28,8 @@ namespace SimpleDnsServer.Tests
             Assert.Equal(TestIp_V4, resolvedIp);
         }
 
-
-        private async Task RegisterAndResolveDomain_ReturnsCorrectIPv6()
+        [Fact]
+        public async Task RegisterAndResolveDomain_ReturnsCorrectIPv6()
         {
             // Arrange: Register domain (assumes server is already running via fixture)
             string dns_ip = DnsConst.DNS_IPv6;
