@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using static SimpleDnsServer.DnsConst;
 
 namespace SimpleDnsServer.Utils;
 
@@ -16,8 +17,8 @@ public class ServerUtils
             dir = dir.Parent;
         }
         var solutionRoot = dir.FullName; // to solution root (SimpleDnsTestTool)
-        string proc_name = DnsConst.DNS_SERVER_PROCESS_NAME + ".exe";
-        var ret = Path.Combine(solutionRoot, "SimpleDnsServer", "bin", "Debug", DnsConst.FRAMEWORK, proc_name);
+        string proc_name = DNS_SERVER_PROCESS_NAME + ".exe";
+        var ret = Path.Combine(solutionRoot, "SimpleDnsServer", "bin", "Debug", FRAMEWORK, proc_name);
         if (!File.Exists(ret))
             throw new FileNotFoundException($"Could not find server executable at {ret}");
         return ret;
@@ -26,21 +27,23 @@ public class ServerUtils
     public static void StartDnsServer()
     {
         var serverExe = GetServerExecutablePath();
-        StartDnsServer(serverExe, DnsConst.DNS_IP, DnsConst.ApiPort, DnsConst.UdpPort);
+        var ip = GetDnsIp(DnsIpMode.Localhost, null);
+        var ip6 = GetDnsIpV6(DnsIpMode.Localhost, null);
+        StartDnsServer(serverExe, ip, ip6, ApiPort, UdpPort);
     }
 
-    public static void StartDnsServer(String ip, int apiPort, int udpPort)
+    public static void StartDnsServer(String ip, String ip6, int apiPort, int udpPort)
     {
         var serverExe = GetServerExecutablePath();
-        StartDnsServer(serverExe, ip, apiPort, udpPort);
+        StartDnsServer(serverExe, ip, ip6, apiPort, udpPort);
     }
 
-    public static void StartDnsServer(string serverExe, String ip, int apiPort, int udpPort)
+    public static void StartDnsServer(string serverExe, String ip, String ip6, int apiPort, int udpPort)
     {
         var _serverProcess = Process.Start(new ProcessStartInfo
         {
             FileName = serverExe,
-            Arguments = $"--ip {ip} --apiPort {apiPort} --udpPort {udpPort}",
+            Arguments = $"--ip {ip} --ip6 {ip6} --apiPort {apiPort} --udpPort {udpPort}",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
