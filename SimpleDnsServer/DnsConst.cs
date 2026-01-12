@@ -20,11 +20,7 @@ public static class DnsConst
     private const string apiPortKey = "apiPort";
     private const string udpPortKey = "udpPort";
 
-    #if SIMPLE_DNS_TESTS
-    private const bool DEFAULT_ENABLE_HTTP = true; // HTTP enabled by default for tests
-    #else
-    private const bool DEFAULT_ENABLE_HTTP = false; // HTTP disabled by default for production
-    #endif
+    public const bool DEFAULT_ENABLE_HTTP = false; // HTTP enabled by default for tests
 
     /// <summary>
     /// Determines if HTTP endpoints should be enabled based on config/args. Default: disabled.

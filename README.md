@@ -1,42 +1,3 @@
-# Enabling HTTPS for Local Development
-
-To run the server and tests with HTTPS endpoints locally, you must trust the ASP.NET Core development certificate on your machine. This allows your server to listen on `https://localhost` without browser or client warnings.
-
-## Steps to Enable HTTPS
-
-1. **Trust the ASP.NET Core development certificate:**
-
-	Open a terminal and run:
-
-	```sh
-	dotnet dev-certs https --trust
-	```
-
-	- On Windows, this will prompt you to trust the certificate. Click 'Yes' to confirm.
-	- The certificate is stored in your user profile's certificate store (not as a file in your project).
-	- You can view it in the Windows Certificate Manager under `Current User > Personal > Certificates` as `ASP.NET Core HTTPS development certificate`.
-
-2. **Ensure your server is configured to listen on HTTPS:**
-
-	The project is set up to listen on both HTTP and HTTPS by default. See `Properties/launchSettings.json` for the `applicationUrl` entry:
-
-	```json
-	"applicationUrl": "http://localhost:5144;https://localhost:7144"
-	```
-
-3. **Run the server:**
-
-	You can now run the server and access it via both HTTP and HTTPS URLs.
-
-4. **Testing with HTTPS:**
-
-	When using tools like `curl`, add the `-k` flag to ignore certificate validation (for self-signed/dev certs):
-
-	```sh
-	curl -k https://localhost:7144/dns/resolve?domain=example.com
-	```
-
----
 # SimpleDnsTestTool Overview
 
 SimpleDnsTestTool is a dual-stack DNS server and client toolkit designed for testing and development. It supports both IPv4 and IPv6 traffic, allowing reliable DNS record registration, resolution, and unregistration. The project emphasizes test stability and reliability through async/await patterns, ensuring operations complete in order and tests run consistently across network stacks.
@@ -61,24 +22,22 @@ Test Stability: Async/await ensures that each step (register, resolve, unregiste
 
 # Rest API tests on localhost
 ## IPv4 Register and resovle:
-curl -k -X POST "https://127.0.0.1:44360/dns/register?domain=ip4.com&ip=192.168.10.20"
+curl -X POST "https://localhost:44360/dns/register?domain=ip4.com&ip=192.168.10.20"
 
-curl -k -X GET "https://127.0.0.1:44360/dns/resolve?domain=ip4.com"
+curl -X GET "https://localhost:44360/dns/resolve?domain=ip4.com"
 
 ## IPv6 Register and resolve:
-curl -k -g -X POST "https://[::1]:44360/dns/register?domain=ip6.com&ip=fd00::101"
+curl -g -X POST "https://localhost:44360/dns/register?domain=ip6.com&ip=fd00::101"
 
-curl -k -g -X GET "https://[::1]:44360/dns/resolve?domain=ip6.com"
-
-(-k: ignore certificate check)
+curl -g -X GET "https://localhost:44360/dns/resolve?domain=ip6.com"
 
 ## Show All entries
-curl -k -g -X GET "https://[::1]:44360/dns/entries"
+curl -g -X GET "https://localhost:44360/dns/entries"
 
 ## PowerShell syntax:
-Invoke-WebRequest -Method POST "http://[::1]:60/dns/register?domain=ip6.com&ip=fd00::101"
+Invoke-WebRequest -Method POST "https://localhost:44360/dns/register?domain=ip6.com&ip=fd00::101"
 
-Invoke-WebRequest -Method GET "http://[::1]:60/dns/resolve?domain=ip6.com"
+Invoke-WebRequest -Uri "https://localhost:44360/dns/resolve?domain=ip6.com"
 
 ## See DNS packets in Wireshark
 The server resolves the name internally, without using DNS protocol. No UDP packets are created.
@@ -115,7 +74,46 @@ nslookup -q=AAAA ip6.com ::1
 
 ---
 
+# Enabling HTTPS for Local Development
 
+To run the server and tests with HTTPS endpoints locally, you must trust the ASP.NET Core development certificate on your machine. This allows your server to listen on `https://localhost` without browser or client warnings.
+
+## Steps to Enable HTTPS
+
+1. **Trust the ASP.NET Core development certificate:**
+
+	Open a terminal and run:
+
+	```sh
+	dotnet dev-certs https --trust
+	```
+
+	- On Windows, this will prompt you to trust the certificate. Click 'Yes' to confirm.
+	- The certificate is stored in your user profile's certificate store (not as a file in your project).
+	- You can view it in the Windows Certificate Manager under `Current User > Personal > Certificates` as `ASP.NET Core HTTPS development certificate` (certmgr.msc ).    
+
+2. **Ensure your server is configured to listen on HTTPS:**
+
+	The project is set up to listen on both HTTP and HTTPS by default. See `Properties/launchSettings.json` for the `applicationUrl` entry:
+
+	```json
+	"applicationUrl": "http://localhost:5144;https://localhost:7144"
+	```
+
+3. **Run the server:**
+
+	You can now run the server and access it via both HTTP and HTTPS URLs.
+
+4. **Testing with HTTPS:**
+    You are using the same Windows user account as when you trusted the cert.
+
+	When using tools like `curl`, add the `-k` flag to ignore certificate validation (for self-signed/dev certs):
+
+	```sh
+	curl -k https://localhost:7144/dns/resolve?domain=example.com
+	```
+
+---
 
 
 

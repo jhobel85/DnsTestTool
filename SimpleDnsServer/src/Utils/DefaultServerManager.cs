@@ -28,21 +28,23 @@ public class DefaultServerManager : IServerManager
         var serverExe = GetServerExecutablePath();
         var ip = GetDnsIp(DnsIpMode.Localhost, null);
         var ip6 = GetDnsIpV6(DnsIpMode.Localhost, null);
-        StartDnsServer(serverExe, ip, ip6, ApiHttp, UdpPort);
+        bool enabled = DEFAULT_ENABLE_HTTP;
+        Console.WriteLine($"[DEBUG] DEFAULT_ENABLE_HTTP at test startup: {enabled}");
+        StartDnsServer(serverExe, ip, ip6, ApiHttp, UdpPort, enabled);
     }
 
-    public void StartDnsServer(string ip, string ip6, int apiPort, int udpPort)
+    public void StartDnsServer(string ip, string ip6, int apiPort, int udpPort, bool httpEnabled)
     {
         var serverExe = GetServerExecutablePath();
-        StartDnsServer(serverExe, ip, ip6, apiPort, udpPort);
+        StartDnsServer(serverExe, ip, ip6, apiPort, udpPort, httpEnabled);
     }
 
-    public void StartDnsServer(string serverExe, string ip, string ip6, int apiPort, int udpPort)
+    public void StartDnsServer(string serverExe, string ip, string ip6, int apiPort, int udpPort, bool httpEnabled)
     {
         var _serverProcess = Process.Start(new ProcessStartInfo
         {
             FileName = serverExe,
-            Arguments = $"--ip {ip} --ip6 {ip6} --apiPort {apiPort} --udpPort {udpPort}",
+            Arguments = $"--ip {ip} --ip6 {ip6} --apiPort {apiPort} --udpPort {udpPort} --http {httpEnabled}",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,

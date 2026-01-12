@@ -16,7 +16,8 @@ namespace SimpleDnsServer.Tests
             WaitForPortToBeFree(DnsConst.ApiHttp, DnsConst.GetDnsIp(), 20000);
             WaitForPortToBeFree(DnsConst.UdpPort, DnsConst.GetDnsIpV6(), 20000);
             WaitForPortToBeFree(DnsConst.ApiHttp, DnsConst.GetDnsIpV6(), 20000);
-            serverManager.StartDnsServer();
+            // Always start with HTTP enabled for tests            
+            serverManager.StartDnsServer(DnsConst.GetDnsIp(), DnsConst.GetDnsIpV6(), DnsConst.ApiHttp, DnsConst.UdpPort, true);
         }
 
 private void KillAnyRunningServer()
