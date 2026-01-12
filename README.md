@@ -22,17 +22,19 @@ Test Stability: Async/await ensures that each step (register, resolve, unregiste
 
 # Rest API tests on localhost
 ## IPv4 Register and resovle:
-curl -X POST "http://127.0.0.1:60/dns/register?domain=ip4.com&ip=192.168.10.20"
+curl -k -X POST "https://127.0.0.1:44360/dns/register?domain=ip4.com&ip=192.168.10.20"
 
-curl -X GET "http://127.0.0.1:60/dns/resolve?domain=ip4.com"
+curl -k -X GET "https://127.0.0.1:44360/dns/resolve?domain=ip4.com"
 
 ## IPv6 Register and resolve:
-curl -g -X POST "http://[::1]:60/dns/register?domain=ip6.com&ip=fd00::101"
+curl -k -g -X POST "https://[::1]:44360/dns/register?domain=ip6.com&ip=fd00::101"
 
-curl -g -X GET "http://[::1]:60/dns/resolve?domain=ip6.com"
+curl -k -g -X GET "https://[::1]:44360/dns/resolve?domain=ip6.com"
+
+(-k: ignore certificate check)
 
 ## Show All entries
-curl -g -X GET "http://[::1]:60/dns/entries"
+curl -k -g -X GET "https://[::1]:44360/dns/entries"
 
 ## PowerShell syntax:
 Invoke-WebRequest -Method POST "http://[::1]:60/dns/register?domain=ip6.com&ip=fd00::101"

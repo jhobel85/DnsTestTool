@@ -9,7 +9,8 @@ public static class DnsConst
     public const string DncControllerName = "dns";
     public const string DNS_ROOT = "/" + DncControllerName;
     public const int UdpPort = 53;
-    public const int ApiPort = 60;
+    public const int ApiHttp = 60;
+    public const int ApiHttps = 44360;
 
     // Try to increase UDP socket buffer size using reflection (ARSoft.Tools.Net does not expose Socket)
     public const int UDP_BUFFER = 8 * 1024 * 1024; //8MB
@@ -53,20 +54,30 @@ public static class DnsConst
         return GetDnsIpV6(DnsIpMode.Custom, config);
     }
 
-    public static string ResolveApiPort(IConfigurationRoot config) => config[apiPortKey] ?? ApiPort.ToString();
+    public static string ResolveApiPort(IConfigurationRoot config) => config[apiPortKey] ?? ApiHttp.ToString();
     public static string ResolveUdpPort(IConfiguration config) => config[udpPortKey] ?? UdpPort.ToString();
 
-    public static string ResolveUrl(IConfigurationRoot config)
+    public static string ResolveHttpUrl(IConfigurationRoot config)
     {
         string ipRes = ResolveDnsIp(config);
-        string port = config[apiPortKey] ?? ApiPort.ToString();
-        return $"https://{ipRes}:{port}";
+        return $"http://{ipRes}:{ApiHttp}";
     }
 
-    public static string ResolveUrlV6(IConfigurationRoot config)
+    public static string ResolveHttpsUrl(IConfigurationRoot config)
+    {
+        string ipRes = ResolveDnsIp(config);
+        return $"https://{ipRes}:{ApiHttps}";
+    }
+
+    public static string ResolveHttpUrlV6(IConfigurationRoot config)
     {
         string ipRes = ResolveDnsIpV6(config);
-        string port = config[apiPortKey] ?? ApiPort.ToString();
-        return $"https://[{ipRes}]:{port}";
+        return $"http://[{ipRes}]:{ApiHttp}";
+    }
+
+    public static string ResolveHttpsUrlV6(IConfigurationRoot config)
+    {
+        string ipRes = ResolveDnsIpV6(config);
+        return $"https://[{ipRes}]:{ApiHttps}";
     }
 }

@@ -28,7 +28,7 @@ public class DefaultServerManager : IServerManager
         var serverExe = GetServerExecutablePath();
         var ip = GetDnsIp(DnsIpMode.Localhost, null);
         var ip6 = GetDnsIpV6(DnsIpMode.Localhost, null);
-        StartDnsServer(serverExe, ip, ip6, ApiPort, UdpPort);
+        StartDnsServer(serverExe, ip, ip6, ApiHttp, UdpPort);
     }
 
     public void StartDnsServer(string ip, string ip6, int apiPort, int udpPort)

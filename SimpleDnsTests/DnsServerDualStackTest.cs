@@ -19,8 +19,8 @@ namespace SimpleDnsServer.Tests
             // Arrange
             string dns_ip_v4 = DnsConst.GetDnsIp(DnsIpMode.Localhost);
             string dns_ip_v6 = DnsConst.GetDnsIpV6(DnsIpMode.Localhost);
-            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiPort);
-            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiPort);
+            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiHttp);
+            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiHttp);
 
             // Register both records
             await dnsClientV4.RegisterAsync(TestDomain_V4, TestIp_V4, true);
@@ -69,8 +69,8 @@ namespace SimpleDnsServer.Tests
 
             string dns_ip_v4 = DnsConst.GetDnsIp(DnsIpMode.Localhost);
             string dns_ip_v6 = DnsConst.GetDnsIpV6(DnsIpMode.Localhost);
-            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiPort);
-            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiPort);
+            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiHttp);
+            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiHttp);
 
             // Register all records in parallel
             var registerTasks = ipv4Domains.Select(d => dnsClientV4.RegisterAsync(d.domain, d.ip, true))

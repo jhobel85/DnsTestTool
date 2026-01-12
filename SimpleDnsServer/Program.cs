@@ -14,12 +14,18 @@ namespace SimpleDnsServer
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            IConfigurationRoot config = CommandLineConfigurationExtensions.AddCommandLine((IConfigurationBuilder)new ConfigurationBuilder(), args).Build();        
+            IConfigurationRoot config = CommandLineConfigurationExtensions.AddCommandLine((IConfigurationBuilder)new ConfigurationBuilder(), args).Build();
+            var urls = new[]
+            {
+                DnsConst.ResolveHttpUrl(config),
+                DnsConst.ResolveHttpsUrl(config),
+                DnsConst.ResolveHttpUrlV6(config),
+                DnsConst.ResolveHttpsUrlV6(config)
+            };
             return GenericHostBuilderExtensions.ConfigureWebHostDefaults(Host.CreateDefaultBuilder(args), (Action<IWebHostBuilder>)(webBuilder =>
             {
                 WebHostBuilderExtensions.UseStartup<Startup>(webBuilder);
-                webBuilder.UseUrls(DnsConst.ResolveUrl(config), DnsConst.ResolveUrlV6(config));
-
+                webBuilder.UseUrls(urls);
             }));
         }
     }
