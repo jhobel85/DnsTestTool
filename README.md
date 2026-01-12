@@ -43,6 +43,30 @@ nslookup ip4.com 127.0.0.1
 nslookup -q=AAAA ip6.com ::1
 (nslookup ip6.com ::1 // nslookup tries both IPv4 and IPv6 when you specify ::1)
 
+# Architecture & Module Responsibilities
+
+## Key Modules
+
+- **IDnsRecordManger / DnsRecordManger**: Core DNS record storage and resolution logic. Registered as a singleton for both API and UDP listener.
+- **IDnsQueryHandler / DefaultDnsQueryHandler**: Handles DNS protocol queries, decoupled from UDP listener for testability and extension.
+- **IProcessManager / DefaultProcessManager**: Abstracts process management (find/kill/check server processes), replacing static ProcessUtils.
+- **IServerManager / DefaultServerManager**: Abstracts server process startup, replacing static ServerUtils.
+- **RestClient**: Client for API, now using IHttpClient abstraction for testability.
+- **Startup.cs**: Registers all abstractions for dependency injection.
+
+## Design Principles
+
+- All infrastructure utilities are now injectable via interfaces, supporting testability and extension.
+- Static helpers are marked obsolete and replaced by DI-registered services.
+- UDP listener delegates DNS query handling to an injected handler, not direct record manager access.
+
+## Extending/Testing
+
+- To mock process/server/network logic, implement the relevant interface and register your mock in DI.
+- For custom DNS query handling, implement IDnsQueryHandler and register it in Startup.cs.
+
+---
+
 
 
 

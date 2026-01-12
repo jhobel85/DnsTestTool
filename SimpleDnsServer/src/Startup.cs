@@ -10,7 +10,16 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
     #pragma warning disable IL2026
+#pragma warning disable IL2026
         services.AddSingleton<IDnsRecordManger, DnsRecordManger>();
+        services.AddSingleton<Utils.IProcessManager, Utils.DefaultProcessManager>();
+        services.AddSingleton<Utils.IServerManager, Utils.DefaultServerManager>();
+        services.AddSingleton<Utils.IDnsQueryHandler, Utils.DefaultDnsQueryHandler>(sp =>
+            new Utils.DefaultDnsQueryHandler(
+                sp.GetRequiredService<IDnsRecordManger>(),
+                sp.GetRequiredService<ILogger<Utils.DefaultDnsQueryHandler>>()
+            )
+        );
     #pragma warning restore IL2026
     // Register System.Text.Json source generation context for DnsEntryDto
 #pragma warning disable IL2026
@@ -20,7 +29,13 @@ public class Startup
         options.JsonSerializerOptions.TypeInfoResolverChain.Add(SimpleDnsServer.DnsJsonContext.Default);
         });
 #pragma warning restore IL2026
-        ServiceCollectionHostedServiceExtensions.AddHostedService<DnsUdpListener>(services);
+        services.AddHostedService<DnsUdpListener>(sp =>
+            new DnsUdpListener(
+                sp.GetRequiredService<Utils.IDnsQueryHandler>(),
+                sp.GetRequiredService<IConfiguration>(),
+                sp.GetRequiredService<ILogger<DnsUdpListener>>()
+            )
+        );
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

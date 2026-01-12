@@ -3,18 +3,20 @@ using System.Net;
 
 namespace SimpleDnsClient;
 
+
 public class RestClient
 {
     public Guid SessionId { get; } = Guid.NewGuid();
     private readonly string serverUrl;
-    private static readonly HttpClient httpClient = new();
+    private readonly IHttpClient httpClient;
 
-    public RestClient(string ip, int apiPort, bool useIPv6 = false)
+    public RestClient(string ip, int apiPort, bool useIPv6 = false, IHttpClient? httpClient = null)
     {
         serverUrl = BuildUrl(ip, apiPort, useIPv6);
         // Ensure /dns is always present as the base path
         if (!serverUrl.EndsWith(DnsConst.DNS_ROOT, StringComparison.OrdinalIgnoreCase))
             serverUrl += DnsConst.DNS_ROOT;
+        this.httpClient = httpClient ?? new DefaultHttpClient();
     }
 
     public async Task RegisterAsync(string domain, string ip, bool registerWithSessionContext = true)
@@ -29,6 +31,7 @@ public class RestClient
         }
     }
 
+
     private async Task RegisterAsync(string domain, string ip, string sessionId)
     {
         var url = $"{serverUrl}/register/session?domain={domain}&ip={ip}&sessionId={sessionId}";
@@ -39,6 +42,7 @@ public class RestClient
         }
     }
 
+
     private async Task RegisterAsync(string domain, string ip)
     {
         var url = $"{serverUrl}/register?domain={domain}&ip={ip}";
@@ -48,6 +52,7 @@ public class RestClient
             Console.WriteLine($"Error while registering domain. HttpStatusCode={response.StatusCode}");
         }
     }
+
 
     public async Task<string> ResolveAsync(string domain)
     {
@@ -63,6 +68,7 @@ public class RestClient
         return result;
     }
 
+
     public async Task UnregisterAsync(string domain)
     {
         var url = $"{serverUrl}/unregister?domain={domain}";
@@ -73,6 +79,7 @@ public class RestClient
         }
     }
 
+
     public async Task UregisterSessionAsync()
     {
         var url = $"{serverUrl}/unregister/session?sessionId={SessionId}";
@@ -82,6 +89,7 @@ public class RestClient
             Console.WriteLine($"Error while unregistering domain. HttpStatusCode={response.StatusCode}");
         }
     }
+
 
     public async Task<int> SessionRecordsCountAsync()
     {
@@ -96,6 +104,7 @@ public class RestClient
             result = await response.Content.ReadAsStringAsync();
         return int.TryParse(result, out var count) ? count : 0;
     }
+
 
     public async Task<int> RecordsCountAsync()
     {

@@ -47,7 +47,14 @@ namespace SimpleDnsServer.Tests
                 (domain: "multi4d.local", ip: "192.168.1.114"),
                 (domain: "multi4e.local", ip: "192.168.1.115"),
                 (domain: "multi4f.local", ip: "192.168.1.116"),
-                (domain: "multi4g.local", ip: "192.168.1.117")
+                (domain: "multi4g.local", ip: "192.168.1.117"),
+                                (domain: "multi4q.local", ip: "192.168.1.111"),
+                (domain: "multi4w.local", ip: "192.168.1.112"),
+                (domain: "multi4c.local", ip: "192.168.1.113"),
+                (domain: "multi4p.local", ip: "192.168.1.114"),
+                (domain: "multi4i.local", ip: "192.168.1.115"),
+                (domain: "multi4y.local", ip: "192.168.1.116"),
+                (domain: "multi4t.local", ip: "192.168.1.117")
             };
             var ipv6Domains = new[]
             {
