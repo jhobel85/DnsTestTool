@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
     <PublishAot>true</PublishAot>
+    <DefineConstants>INTEGRATION_TESTS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
