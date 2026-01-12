@@ -5,7 +5,7 @@ using SimpleDnsServer;
 namespace SimpleDnsServer
 {
     // Entry point for running the server
-    public partial class Program
+    public class Program
     {
         public static void Main(string[] args)
         {

@@ -30,25 +30,28 @@ public class DnsUdpListener : BackgroundService
         var transportV4 = new UdpServerTransport(new IPEndPoint(IPAddress.Parse(ipString), port));
         var transportV6 = new UdpServerTransport(new IPEndPoint(IPAddress.Parse(ipStringV6), port));
 
+        SetUdpSocketBufferSafe(transportV4);
+        SetUdpSocketBufferSafe(transportV6);
+
+        udpServer = new DnsServer(new[] { transportV4, transportV6 });
+        udpServer.QueryReceived += new AsyncEventHandler<QueryReceivedEventArgs>(OnQueryReceived);
+    }
+
+    private void SetUdpSocketBufferSafe(UdpServerTransport transport)
+    {
         try
         {
             var socketField = typeof(UdpServerTransport).GetField("_udpClient", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (socketField != null)
             {
-                var udpClientV4 = socketField.GetValue(transportV4) as UdpClient;
-                var udpClientV6 = socketField.GetValue(transportV6) as UdpClient;
-
-                udpClientV4?.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, DnsConst.UDP_BUFFER);
-                udpClientV6?.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, DnsConst.UDP_BUFFER);
+                var udpClient = socketField.GetValue(transport) as UdpClient;
+                udpClient?.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, DnsConst.UDP_BUFFER);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "[DnsUdpListener] Could not set UDP socket buffer size");
         }
-
-        udpServer = new DnsServer([transportV4, transportV6]);
-        udpServer.QueryReceived += new AsyncEventHandler<QueryReceivedEventArgs>(OnQueryReceived);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -90,7 +93,8 @@ public class DnsUdpListener : BackgroundService
 
     public override void Dispose()
     {
-        base.Dispose();
         udpServer?.Stop();
+        base.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

@@ -14,12 +14,10 @@ public static class ClientUtils
         client.Connect(dns_ip, port);
         var query = BuildDnsQuery(domain);
         await client.SendAsync(query, query.Length);
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(ClientTimeout);
-        var receiveTask = client.ReceiveAsync(); // start the receive, then await its completion (or timeout) further.
+        var receiveTask = client.ReceiveAsync();
         try
         {
-            var completedTask = await Task.WhenAny(receiveTask, Task.Delay(Timeout.Infinite, cts.Token));
+            var completedTask = await Task.WhenAny(receiveTask, Task.Delay(ClientTimeout, cancellationToken));
             if (completedTask == receiveTask)
             {
                 var result = await receiveTask;
@@ -42,12 +40,10 @@ public static class ClientUtils
         client.Connect(dns_ip, port);
         var query = BuildDnsQueryAAAA(domain);
         await client.SendAsync(query, query.Length);
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(ClientTimeout);
         var receiveTask = client.ReceiveAsync();
         try
         {
-            var completedTask = await Task.WhenAny(receiveTask, Task.Delay(Timeout.Infinite, cts.Token));
+            var completedTask = await Task.WhenAny(receiveTask, Task.Delay(ClientTimeout, cancellationToken));
             if (completedTask == receiveTask)
             {
                 var result = await receiveTask;

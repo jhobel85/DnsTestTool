@@ -9,7 +9,7 @@ public class DefaultProcessManager : IProcessManager
     public HashSet<int> FindServerProcessIDs(int portNr, string? ipAddress = null)
     {
         HashSet<int> result = [];
-        string cmdArg = "/C netstat -ano | findstr ':" + portNr + "\"";
+        string cmdArg = $"/C netstat -ano | findstr ':{portNr}";
         var startInfo = new ProcessStartInfo()
         {
             Arguments = cmdArg.Trim(),
@@ -19,45 +19,16 @@ public class DefaultProcessManager : IProcessManager
             CreateNoWindow = true,
             UseShellExecute = false
         };
-        Process cmd = new() { StartInfo = startInfo };
         string cmdError = string.Empty;
         try
         {
+            using Process cmd = new() { StartInfo = startInfo };
             cmd.Start();
             var stdOut = cmd.StandardOutput;
             var stdErr = cmd.StandardError;
-            while (!stdOut.EndOfStream)
-            {
-                var line = stdOut.ReadLine();
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-                var splitResult = CleanAndSplitLine(line);
-                if (splitResult.Length < 2)
-                    continue;
-                if (TryParseIpAndPort(splitResult[1], out string? ip, out string? port))
-                {
-                    if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(port))
-                        continue;
-                    if (!int.TryParse(port, out int foundPortNr))
-                        continue;
-                    string normIp = ip;
-                    string? normArgIp = ipAddress;
-                    if (!string.IsNullOrEmpty(ipAddress))
-                    {
-                        try { normIp = System.Net.IPAddress.Parse(ip).ToString(); } catch { /* ignored: invalid IP */ }
-                        try { normArgIp = System.Net.IPAddress.Parse(ipAddress).ToString(); } catch { /* ignored: invalid IP */ }
-                    }
-                    if (foundPortNr == portNr && (ipAddress == null || normIp == normArgIp))
-                    {
-                        string strProcessNr = splitResult[^1];
-                        if (int.TryParse(strProcessNr, out int intProcessNr))
-                            result.Add(intProcessNr);
-                    }
-                }
-            }
+            ProcessNetstatOutput(stdOut, portNr, ipAddress, result);
             cmdError = stdErr.ReadToEnd();
             cmd.WaitForExit();
-            cmd.Close();
         }
         catch (Exception e)
         {
@@ -66,6 +37,43 @@ public class DefaultProcessManager : IProcessManager
         if (!string.IsNullOrEmpty(cmdError))
             Console.WriteLine("Process returned error: " + cmdError);
         return result;
+    }
+
+    private static void ProcessNetstatOutput(System.IO.StreamReader stdOut, int portNr, string? ipAddress, HashSet<int> result)
+    {
+        while (!stdOut.EndOfStream)
+        {
+            var line = stdOut.ReadLine();
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            var splitResult = CleanAndSplitLine(line);
+            if (splitResult.Length < 2)
+                continue;
+            TryAddProcessIdFromLine(splitResult, portNr, ipAddress, result);
+        }
+    }
+
+    private static void TryAddProcessIdFromLine(string[] splitResult, int portNr, string? ipAddress, HashSet<int> result)
+    {
+        if (!TryParseIpAndPort(splitResult[1], out string? ip, out string? port))
+            return;
+        if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(port))
+            return;
+        if (!int.TryParse(port, out int foundPortNr))
+            return;
+        string normIp = ip;
+        string? normArgIp = ipAddress;
+        if (!string.IsNullOrEmpty(ipAddress))
+        {
+            try { normIp = System.Net.IPAddress.Parse(ip).ToString(); } catch { /* ignored: invalid IP */ }
+            try { normArgIp = System.Net.IPAddress.Parse(ipAddress).ToString(); } catch { /* ignored: invalid IP */ }
+        }
+        if (foundPortNr == portNr && (ipAddress == null || normIp == normArgIp))
+        {
+            string strProcessNr = splitResult[^1];
+            if (int.TryParse(strProcessNr, out int intProcessNr))
+                result.Add(intProcessNr);
+        }
     }
 
     private static string[] CleanAndSplitLine(string line)

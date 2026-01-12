@@ -27,10 +27,10 @@ public class DnsRecordManger : IDnsRecordManger
         foreach (var kvp in records.ToArray())
         {
             string key = kvp.Key;
-            if (domain.StartsWith(key))
+            if (domain.StartsWith(key, StringComparison.Ordinal))
             {
                 string str = domain.Substring(key.Length);
-                if (str.Length == 0 || str.StartsWith("."))
+                if (str.Length == 0 || str.StartsWith(".", StringComparison.Ordinal))
                     return kvp.Value;
             }
         }

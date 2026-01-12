@@ -5,8 +5,8 @@ namespace SimpleDnsServer.Tests
 {
     public class DnsServerFixture : IDisposable
     {
-        private readonly IServerManager serverManager = new DefaultServerManager();
-        private readonly IProcessManager processManager = new DefaultProcessManager();
+        private readonly DefaultServerManager serverManager = new DefaultServerManager();
+        private readonly DefaultProcessManager processManager = new DefaultProcessManager();
 
         public DnsServerFixture()
         {
@@ -42,6 +42,7 @@ private void KillAnyRunningServer()
         public void Dispose()
         {
             KillAnyRunningServer(); // after tests
+            GC.SuppressFinalize(this);
         }
 
         // Wait for OS to release sockets (avoid port conflict)
