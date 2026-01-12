@@ -19,6 +19,9 @@ public class DefaultProcessManager : IProcessManager
             CreateNoWindow = true,
             UseShellExecute = false
         };
+        // Set PATH to only fixed, unwriteable directories for security
+        //improved security. This prevents execution of malicious binaries from user-writable locations.
+        startInfo.Environment["PATH"] = @"C:\Windows\System32;C:\Windows";
         string cmdError = string.Empty;
         try
         {
@@ -112,6 +115,8 @@ public class DefaultProcessManager : IProcessManager
                 Verb = "runas",
                 Arguments = arg
             };
+            // Set PATH to only fixed, unwriteable directories for security
+            processInf.Environment["PATH"] = @"C:\Windows\System32;C:\Windows";
             var proc = Process.Start(processInf);
             if (proc != null && proc.HasExited)
                 Console.WriteLine("Process ID " + pid + " killed by admin rights.");
