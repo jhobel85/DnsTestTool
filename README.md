@@ -28,24 +28,27 @@ mydns.local
 
 # Rest API tests on localhost
 ## IPv4 Register and resovle:
-curl -X POST "https://localhost:443/dns/register?domain=ip4.com&ip=192.168.10.20"
-curl -X POST "http://127.0.0.1:80/dns/register?domain=ip4.com&ip=192.168.10.21"
+curl.exe -X POST "https://localhost:443/dns/register?domain=ip4.com&ip=192.168.10.20"
+curl.exe -X POST "http://127.0.0.1:80/dns/register?domain=ip4.com&ip=192.168.10.21"
 
-curl -X GET "https://localhost:443/dns/resolve?domain=ip4.com"
-curl -X GET "http://127.0.0.1:80/dns/resolve?domain=ip4.com"
+curl.exe -X GET "https://localhost:443/dns/resolve?domain=ip4.com"
+curl.exe -X GET "http://127.0.0.1:80/dns/resolve?domain=ip4.com"
 
 curl -X GET "https://localhost:443/dns/entries"
-curl -X GET "http://127.0.0.1:80/dns/entries"
+curl.exe -X GET "http://127.0.0.1:80/dns/entries"
+
+curl.exe -X GET "https://localhost:443/dns/query?domain=ip4.com"
+curl.exe -X GET "http://127.0.0.1:80//dns/query?domain=ip4.com"
 
 ## IPv6 Register and resolve:
-curl -X POST "https://localhost:443/dns/register?domain=ip6.com&ip=fd00:10::20"
-curl -g -X POST "http://[::1]:80/dns/register?domain=ip6.com&ip=fd00:10::21"
+curl.exe -X POST "https://localhost:443/dns/register?domain=ip6.com&ip=fd00:10::20"
+curl.exe -g -X POST "http://[::1]:80/dns/register?domain=ip6.com&ip=fd00:10::21"
 
-curl -X GET "https://localhost:443/dns/resolve?domain=ip6.com"
-curl -g -X GET "http://[::1]:80/dns/resolve?domain=ip6.com"
+curl.exe -X GET "https://localhost:443/dns/resolve?domain=ip6.com"
+curl.exe -g -X GET "http://[::1]:80/dns/resolve?domain=ip6.com"
 
-curl -X GET "https://localhost:443/dns/entries"
-curl -g -X GET "http://[::1]:80/dns/entries"
+curl.exe -X GET "https://localhost:443/dns/entries"
+curl.exe -g -X GET "http://[::1]:80/dns/entries"
 
 
 ## PowerShell syntax:
@@ -58,8 +61,9 @@ Invoke-WebRequest -Uri "http://[::1]:80/dns/resolve?domain=ip6.com" -UseBasicPar
 Invoke-WebRequest -Uri "https://localhost:443/dns/entries" -UseBasicParsing
 Invoke-WebRequest -Uri "http://[::1]:80/dns/entries" -UseBasicParsing
 
-Invoke-WebRequest -Uri "http://127.0.0.1:80/dns/query?domain=testquery2.com&dnsServer={127.0.0.1}&port=53&type=A"
-Invoke-WebRequest -Uri "http://127.0.0.1:80/dns/query?domain=testquery2.com"
+Invoke-WebRequest -Uri "https://localhost:443/dns/query?domain=ip6.com" -UseBasicParsing
+Invoke-WebRequest -Uri "http://127.0.0.1:80/dns/query?domain=ip6.com" -UseBasicParsing
+
 
 ## See DNS packets in Wireshark
 The server resolves the name internally, without using DNS protocol. No UDP packets are created.
