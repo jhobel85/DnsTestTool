@@ -66,7 +66,7 @@ The server resolves the name internally, without using DNS protocol. No UDP pack
 
 Therfore Resolve via nslookup (work only with port 53):
 
-nslookup ip4.com 127.0.0.1
+nslookup mytest1234.test. 127.0.0.1
 
 nslookup -q=AAAA ip6.com ::1
 

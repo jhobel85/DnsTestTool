@@ -48,7 +48,7 @@ private void KillAnyRunningServer()
         }
 
         // Wait for OS to release sockets (avoid port conflict)
-        private void WaitForPortToBeFree(int port, string IP, int maxWaitMs = 10000, int pollMs = 250)
+        private void WaitForPortToBeFree(int port, string IP, int maxWaitMs = 10000, int pollMs = 500)
         {
             int waited = 0;
             while (processManager.IsServerRunning(port, IP))

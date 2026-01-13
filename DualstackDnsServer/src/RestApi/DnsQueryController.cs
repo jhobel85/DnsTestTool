@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
+using System.Net;
 using DualstackDnsServer.Utils;
 using DualstackDnsServer;
 using DualstackDnsServer.Services;
@@ -41,17 +42,19 @@ public class DnsQueryController : ControllerBase
 
         try
         {
-            // Query AAAA (IPv6) first
-            string ipv6 = await _dnsUdpClient.QueryDnsAsync(domain, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(ipv6))
-                return Ok(new { IPv6 = ipv6 });
+            // Service already tries AAAA then A; call once and classify the result
+            string resolvedIp = await _dnsUdpClient.QueryDnsAsync(domain, cancellationToken);
+            if (string.IsNullOrWhiteSpace(resolvedIp))
+                return NotFound($"No IP found for domain {domain}.");
 
-            // Query A (IPv4) if no IPv6 found
-            string ipv4 = await _dnsUdpClient.QueryDnsAsync(domain, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(ipv4))
-                return Ok(new { IPv4 = ipv4 });
+            if (IPAddress.TryParse(resolvedIp, out var parsedIp))
+            {
+                return parsedIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+                    ? Ok(new { IPv6 = resolvedIp })
+                    : Ok(new { IPv4 = resolvedIp });
+            }
 
-            return NotFound($"No IP found for domain {domain}.");
+            return Ok(new { IP = resolvedIp });
         }
         catch (Exception ex)
         {

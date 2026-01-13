@@ -1,8 +1,9 @@
+namespace DualstackDnsServer.Utils;
+
 using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
+using DualstackDnsServer.Services;
 using System.Net;
-
-namespace DualstackDnsServer.Services;
 
 public class DnsQueryHandler : IDnsQueryHandler
 {
@@ -37,7 +38,10 @@ public class DnsQueryHandler : IDnsQueryHandler
                     if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
                         responseInstance.AnswerRecords.Add(new AaaaRecord(DomainName.Parse(str), 3600, ip));
                 }
-                // No else: do not add a record if the address family does not match!
+                else
+                {
+                    responseInstance.ReturnCode = ReturnCode.ServerFailure;
+                }
             }
             else
             {
