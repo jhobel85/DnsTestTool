@@ -12,12 +12,12 @@ public class Startup
     #pragma warning disable IL2026
 #pragma warning disable IL2026
         services.AddSingleton<IDnsRecordManger, DnsRecordManger>();
-        services.AddSingleton<Utils.IProcessManager, Utils.DefaultProcessManager>();
-        services.AddSingleton<Utils.IServerManager, Utils.DefaultServerManager>();
-        services.AddSingleton<Utils.IDnsQueryHandler, Utils.DefaultDnsQueryHandler>(sp =>
-            new Utils.DefaultDnsQueryHandler(
+        services.AddSingleton<Utils.IProcessManager, Utils.ProcessManager>();
+        services.AddSingleton<Utils.IServerManager, Utils.ServerManager>();
+        services.AddSingleton<Utils.IDnsQueryHandler, Utils.DnsQueryHandler>(sp =>
+            new Utils.DnsQueryHandler(
                 sp.GetRequiredService<IDnsRecordManger>(),
-                sp.GetRequiredService<ILogger<Utils.DefaultDnsQueryHandler>>()
+                sp.GetRequiredService<ILogger<Utils.DnsQueryHandler>>()
             )
         );
     #pragma warning restore IL2026

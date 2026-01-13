@@ -30,11 +30,11 @@ public class RestClient
     {
         if (registerWithSessionContext)
         {
-            await RegisterAsync(domain, ip, SessionId.ToString());
+            await RegisterAsync(domain, ip, SessionId.ToString()).ConfigureAwait(false);
         }
         else
         {
-            await RegisterAsync(domain, ip);
+            await RegisterAsync(domain, ip).ConfigureAwait(false);
         }
     }
 
@@ -42,10 +42,10 @@ public class RestClient
     private async Task RegisterAsync(string domain, string ip, string sessionId)
     {
         var url = $"{serverUrl}/register/session?domain={domain}&ip={ip}&sessionId={sessionId}";
-        var response = await httpClient.PostAsync(url, null);
+        var response = await httpClient.PostAsync(url, null).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"Error while registering domain. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while registering domain. HttpStatusCode={response.StatusCode}");
         }
     }
 
@@ -53,10 +53,10 @@ public class RestClient
     private async Task RegisterAsync(string domain, string ip)
     {
         var url = $"{serverUrl}/register?domain={domain}&ip={ip}";
-        var response = await httpClient.PostAsync(url, null);
+        var response = await httpClient.PostAsync(url, null).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"Error while registering domain. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while registering domain. HttpStatusCode={response.StatusCode}");
         }
     }
 
@@ -64,14 +64,14 @@ public class RestClient
     public async Task<string> ResolveAsync(string domain)
     {
         var url = $"{serverUrl}/resolve?domain={domain}";
-        var response = await httpClient.GetAsync(url);
+        var response = await httpClient.GetAsync(url).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NoContent)
         {
-            Console.WriteLine($"Error while resolving domain. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while resolving domain. HttpStatusCode={response.StatusCode}");
         }
         string result = "";
         if (response.IsSuccessStatusCode)
-            result = await response.Content.ReadAsStringAsync();
+            result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         return result;
     }
 
@@ -79,10 +79,10 @@ public class RestClient
     public async Task UnregisterAsync(string domain)
     {
         var url = $"{serverUrl}/unregister?domain={domain}";
-        var response = await httpClient.PostAsync(url, null);
+        var response = await httpClient.PostAsync(url, null).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NoContent)
         {
-            Console.WriteLine($"Error while unregistering domain. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while unregistering domain. HttpStatusCode={response.StatusCode}");
         }
     }
 
@@ -90,10 +90,10 @@ public class RestClient
     public async Task UregisterSessionAsync()
     {
         var url = $"{serverUrl}/unregister/session?sessionId={SessionId}";
-        var response = await httpClient.PostAsync(url, null);
+        var response = await httpClient.PostAsync(url, null).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NoContent)
         {
-            Console.WriteLine($"Error while unregistering domain. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while unregistering domain. HttpStatusCode={response.StatusCode}");
         }
     }
 
@@ -101,14 +101,14 @@ public class RestClient
     public async Task<int> SessionRecordsCountAsync()
     {
         var url = $"{serverUrl}/count/session?sessionId={SessionId}";
-        var response = await httpClient.GetAsync(url);
+        var response = await httpClient.GetAsync(url).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NoContent)
         {
-            Console.WriteLine($"Error while get SessionRecordsCount. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while get SessionRecordsCount. HttpStatusCode={response.StatusCode}");
         }
         string result = "";
         if (response.IsSuccessStatusCode)
-            result = await response.Content.ReadAsStringAsync();
+            result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         return int.TryParse(result, out var count) ? count : 0;
     }
 
@@ -116,15 +116,63 @@ public class RestClient
     public async Task<int> RecordsCountAsync()
     {
         var url = $"{serverUrl}/count";
-        var response = await httpClient.GetAsync(url);
+        var response = await httpClient.GetAsync(url).ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"Error while get RecordsCount. HttpStatusCode={response.StatusCode}");
+            throw new HttpRequestException($"Error while get RecordsCount. HttpStatusCode={response.StatusCode}");
         }
         string result = "";
         if (response.IsSuccessStatusCode)
-            result = await response.Content.ReadAsStringAsync();
+            result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         return int.TryParse(result, out var count) ? count : 0;
+    }
+
+    /// <summary>
+    /// Synchronous version of RegisterAsync
+    /// </summary>
+    public void Register(string domain, string ip, bool registerWithSessionContext)
+    {
+        RegisterAsync(domain, ip, registerWithSessionContext).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Synchronous version of ResolveAsync
+    /// </summary>
+    public string Resolve(string domain)
+    {
+        return ResolveAsync(domain).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Synchronous version of UnregisterAsync
+    /// </summary>
+    public void Unregister(string domain)
+    {
+        UnregisterAsync(domain).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Synchronous version of UregisterSessionAsync
+    /// </summary>
+    public void UnregisterSession()
+    {
+        UregisterSessionAsync().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Synchronous version of SessionRecordsCountAsync
+    /// </summary>
+    public int SessionRecordsCount()
+    {
+        return SessionRecordsCountAsync().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Synchronous version of RecordsCountAsync
+    /// </summary>
+    public int RecordsCount()
+    {
+        return RecordsCountAsync().GetAwaiter().GetResult();
     }
 
     private static string BuildUrl(string ip, int apiPort, string protocol)

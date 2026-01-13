@@ -8,7 +8,7 @@ namespace SimpleDnsTests
         [Fact]
         public void FindServerProcessIDs_ReturnsEmptySet_ForUnusedPort()
         {
-            var mgr = new DefaultProcessManager();
+            var mgr = new ProcessManager();
             var result = mgr.FindServerProcessIDs(65534); // unlikely to be used
             Assert.NotNull(result);
             Assert.Empty(result);
@@ -17,7 +17,7 @@ namespace SimpleDnsTests
         [Fact]
         public void IsServerRunning_ReturnsFalse_ForUnusedPort()
         {
-            var mgr = new DefaultProcessManager();
+            var mgr = new ProcessManager();
             Assert.False(mgr.IsServerRunning(65534));
         }
     }

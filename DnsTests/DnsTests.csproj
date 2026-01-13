@@ -4,8 +4,13 @@
   <TargetFramework>net10.0</TargetFramework>
   <ImplicitUsings>enable</ImplicitUsings>
   <Nullable>enable</Nullable>
-  <IsPackable>false</IsPackable>
-  <DefineConstants>$(DefineConstants);SIMPLE_DNS_TESTS</DefineConstants>
+  <IsPackable>false</IsPackable>    
+</PropertyGroup>
+
+<PropertyGroup>
+  <DefineConstants>$(DefineConstants);INTEGRATION_TESTS</DefineConstants>
+  <INTEGRATION_TESTS>true</INTEGRATION_TESTS>
+  <AddDefineConstantsToReferences>true</AddDefineConstantsToReferences>
 </PropertyGroup>
 
   <ItemGroup>

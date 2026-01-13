@@ -16,7 +16,7 @@ namespace SimpleDnsTests
             var recordMgr = new Mock<IDnsRecordManger>();
             recordMgr.Setup(m => m.Resolve(It.IsAny<string>())).Returns((string?)null);
             var logger = new Mock<ILogger>();
-            var handler = new DefaultDnsQueryHandler(recordMgr.Object, logger.Object);
+            var handler = new DnsQueryHandler(recordMgr.Object, logger.Object);
             var query = new DnsMessage();
             query.Questions.Add(new DnsQuestion(DomainName.Parse("unknown.com"), RecordType.A, RecordClass.INet));
             var response = await handler.HandleQueryAsync(query);

@@ -1,4 +1,3 @@
-#if INTEGRATION_TESTS
 namespace DualstackDnsServer
 {
     // Used only for integration test host startup
@@ -6,4 +5,3 @@ namespace DualstackDnsServer
     [System.Diagnostics.CodeAnalysis.SuppressMessage("SonarQube", "S2094", Justification = "Required for integration test host startup; see WebApplicationFactory<T> pattern.")]
     public class TestProgram { }
 }
-#endif

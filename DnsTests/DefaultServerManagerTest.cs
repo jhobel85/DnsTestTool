@@ -8,7 +8,7 @@ namespace SimpleDnsTests
         [Fact]
         public void CanInstantiateDefaultServerManager()
         {
-            var mgr = new DefaultServerManager();
+            var mgr = new ServerManager();
             Assert.NotNull(mgr);
         }
     }

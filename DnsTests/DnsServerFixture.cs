@@ -5,8 +5,8 @@ namespace DualstackDnsServer.Tests
 {
     public class DnsServerFixture : IDisposable
     {
-        private readonly DefaultServerManager serverManager = new DefaultServerManager();
-        private readonly DefaultProcessManager processManager = new DefaultProcessManager();
+        private readonly ServerManager serverManager = new ServerManager();
+        private readonly ProcessManager processManager = new ProcessManager();
 
         public DnsServerFixture()
         {

@@ -12,34 +12,40 @@ Test Stability: Async/await ensures that each step (register, resolve, unregiste
 
 # How to start the server
 1] Default run: DualstackDnsServer.exe
-- IPv4 will be localhost 172.0.0.1, UDP port 53 and API port 44360 (HTTPS)
-- IPv6 will be localhost [::1], UDP port 53 and API port 44360 (HTTPS)
+- IPv4 will be localhost 172.0.0.1, UDP port 53 and API port 443 (HTTPS)
+- IPv6 will be localhost [::1], UDP port 53 and API port 443 (HTTPS)
 - HTTP disabled by default
-2] Custom run: DualstackDnsServer.exe --ip 192.168.50.1 --ip6 fd00:50::1 --apiPort 10053 --udpPort 10060 --http true
+
+2] Custom run: DualstackDnsServer.exe --ip 192.168.10.1 --ip6 fd00:10::1 --apiPort 8443 --udpPort 10053 --http true --cert "C:\mydns.local.pfx" --certPassw "P@ssw0rd!"
 - custom IPv4 and IPv6
 - custom ports
-- HTTP can be enabled by "--http true", will always run on port 60
+- select certificate for custom IP
+- HTTP can be enabled by "--http true", will always run on port 80
 - If any of parameters not be specified default values be used.
 
 
+mydns.local
+
 # Rest API tests on localhost
 ## IPv4 Register and resovle:
-curl -X POST "https://localhost:44360/dns/register?domain=ip4.com&ip=192.168.10.20"
+curl -X POST "https://localhost:443/dns/register?domain=ip4.com&ip=192.168.10.20"
+curl -X POST "https://127.0.0.1:443/dns/register?domain=ip4.com&ip=192.168.10.20"
 
-curl -X GET "https://localhost:44360/dns/resolve?domain=ip4.com"
+curl -X GET "https://localhost:443/dns/resolve?domain=ip4.com"
 
 ## IPv6 Register and resolve:
-curl -g -X POST "https://localhost:44360/dns/register?domain=ip6.com&ip=fd00::101"
+curl -g -X POST "https://localhost:443/dns/register?domain=ip6.com&ip=fd00:10::20"
+curl -g -X POST "https://[fd00:10::1]:443/dns/register?domain=ip6.com&ip=fd00:10::20"
 
-curl -g -X GET "https://localhost:44360/dns/resolve?domain=ip6.com"
+curl -g -X GET "https://localhost:443/dns/resolve?domain=ip6.com"
 
 ## Show All entries
-curl -g -X GET "https://localhost:44360/dns/entries"
+curl -g -X GET "https://localhost:443/dns/entries"
 
 ## PowerShell syntax:
-Invoke-WebRequest -Method POST "https://localhost:44360/dns/register?domain=ip6.com&ip=fd00::101"
+Invoke-WebRequest -Method POST "https://localhost:443/dns/register?domain=ip6.com&ip=fd00:10::20"
 
-Invoke-WebRequest -Uri "https://localhost:44360/dns/resolve?domain=ip6.com"
+Invoke-WebRequest -Uri "https://localhost:443/dns/resolve?domain=ip6.com"
 
 ## See DNS packets in Wireshark
 The server resolves the name internally, without using DNS protocol. No UDP packets are created.
@@ -76,13 +82,13 @@ nslookup -q=AAAA ip6.com ::1
 
 ---
 
-# Enabling HTTPS for Local Development
+# Enabling HTTPS
 
-To run the server and tests with HTTPS endpoints locally, you must trust the ASP.NET Core development certificate on your machine. This allows your server to listen on `https://localhost` without browser or client warnings.
+To run the server and tests with HTTPS endpoints locally, you must trust the ASP.NET Core development certificate on your machine. 
 
-## Steps to Enable HTTPS
+1. **Trust the ASP.NET Core development certificate (localhost):**
 
-1. **Trust the ASP.NET Core development certificate:**
+This allows your server to listen on `https://localhost` without browser or client warnings (For Local Development).
 
 	Open a terminal and run:
 
@@ -92,30 +98,43 @@ To run the server and tests with HTTPS endpoints locally, you must trust the ASP
 
 	- On Windows, this will prompt you to trust the certificate. Click 'Yes' to confirm.
 	- The certificate is stored in your user profile's certificate store (not as a file in your project).
-	- You can view it in the Windows Certificate Manager under `Current User > Personal > Certificates` as `ASP.NET Core HTTPS development certificate` (certmgr.msc ).    
+	- You can view it in the Windows Certificate Manager under `Current User > Personal > Certificates` as `ASP.NET Core HTTPS development certificate` (certmgr.msc ).   
 
-2. **Ensure your server is configured to listen on HTTPS:**
+	By default, ASP.NET Core uses this certificate for HTTPS on localhost. 
 
-	The project is set up to listen on both HTTP and HTTPS by default. See `Properties/launchSettings.json` for the `applicationUrl` entry:
+	Access your API using https://localhost (not an IP address or other hostname).
 
-	```json
-	"applicationUrl": "http://localhost:5144;https://localhost:7144"
-	```
+The certificate is only valid for localhost, not for 127.0.0.1 or other names.
 
-3. **Run the server:**
+2. **use HTTPS with a custom hostname (e.g., mydns.local):**
 
-	You can now run the server and access it via both HTTP and HTTPS URLs.
+1. Generate a self-signed certificate for your hostname
+Open PowerShell as Administrator and run:
 
-4. **Testing with HTTPS:**
-    You are using the same Windows user account as when you trusted the cert.
+```sh
+$cert = New-SelfSignedCertificate -DnsName "mydns.local" -CertStoreLocation "cert:\LocalMachine\My" -TextExtension @("2.5.29.17={text}dns=mydns.local&ipaddress=192.168.10.1&ipaddress=fd00:10::1")
+$password = ConvertTo-SecureString -String "P@ssw0rd!" -Force -AsPlainText
+Export-PfxCertificate -Cert $cert -FilePath "C:\mydns.local.pfx" -Password $password
+```
 
-	When using tools like `curl`, add the `-k` flag to ignore certificate validation (for self-signed/dev certs):
+2. Trust the certificate
 
-	```sh
-	curl -k https://localhost:7144/dns/resolve?domain=example.com
-	```
+Open mmc.exe, add the “Certificates” snap-in for “Local Computer”.
+Import the generated .pfx into “Trusted Root Certification Authorities”.
 
----
+or via powershell
+
+```sh
+Export-Certificate -Cert $cert -FilePath "C:\mydns.local.cer"
+Import-Certificate -FilePath "C:\mydns.local.cer" -CertStoreLocation "cert:\LocalMachine\Root"
+```
+
+3. Add the hostname to your hosts file
+
+On Windows edit 'C:\Windows\System32\drivers\etc\hosts' and add:
+127.0.0.1 mydns.local
+
+4.  start server with argument where to find the certificate and what is the password
 
 
 

@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace DualstackDnsServer.Utils;
 
-public class DefaultProcessManager : IProcessManager
+public class ProcessManager : IProcessManager
 {
     public HashSet<int> FindServerProcessIDs(int portNr, string? ipAddress = null)
     {

@@ -4,12 +4,12 @@ using ARSoft.Tools.Net;
 using ARSoft.Tools.Net.Dns;
 using System.Net;
 
-public class DefaultDnsQueryHandler : IDnsQueryHandler
+public class DnsQueryHandler : IDnsQueryHandler
 {
     private readonly IDnsRecordManger recordManager;
     private readonly ILogger logger;
 
-    public DefaultDnsQueryHandler(IDnsRecordManger recordManager, ILogger logger)
+    public DnsQueryHandler(IDnsRecordManger recordManager, ILogger logger)
     {
         this.recordManager = recordManager;
         this.logger = logger;

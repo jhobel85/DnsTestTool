@@ -3,14 +3,15 @@
 #nullable disable
 
 public static class DnsConst
+
 {
     public const string DNS_SERVER_PROCESS_NAME = "DualstackDnsServer";
     public const string FRAMEWORK = "net8.0";
     public const string DncControllerName = "dns";
     public const string DNS_ROOT = "/" + DncControllerName;
     public const int UdpPort = 53;
-    public const int ApiHttp = 60;
-    public const int ApiHttps = 44360;
+    public const int ApiHttp = 80;
+    public const int ApiHttps = 443;
 
     // Try to increase UDP socket buffer size using reflection (ARSoft.Tools.Net does not expose Socket)
     public const int UDP_BUFFER = 8 * 1024 * 1024; //8MB
@@ -19,8 +20,28 @@ public static class DnsConst
     private const string ip6Key = "ip6";
     private const string apiPortKey = "apiPort";
     private const string udpPortKey = "udpPort";
+    public const string certPathKey = "cert";
+    public const string certPasswordKey = "certPassw";
+    
+        /// <summary>
+    /// Gets the certificate path from configuration.
+    /// </summary>
+    public static string GetCertPath(IConfiguration config) => config[certPathKey];
 
-    public const bool DEFAULT_ENABLE_HTTP = false; // HTTP enabled by default for tests
+    /// <summary>
+    /// Gets the certificate password from configuration.
+    /// </summary>
+    public static string GetCertPassword(IConfiguration config) => config[certPasswordKey];
+    
+    //public static bool DEFAULT_ENABLE_HTTP = false;
+    
+    public static bool DEFAULT_ENABLE_HTTP {
+    #if INTEGRATION_TESTS
+        get { return true; }
+    #else
+        get { return false; }
+    #endif
+        } // HTTP enabled by default for tests
 
     /// <summary>
     /// Determines if HTTP endpoints should be enabled based on config/args. Default: disabled.
@@ -53,7 +74,7 @@ public static class DnsConst
             DnsIpMode.Custom => config?[ipKey] ?? "127.0.0.1",
             _ => "127.0.0.1"
         };
-    }
+    }    
 
     public static string GetDnsIpV6(DnsIpMode mode = DnsIpMode.Localhost, IConfiguration config = null)
     {
@@ -63,6 +84,17 @@ public static class DnsConst
             DnsIpMode.Localhost => "::1",
             DnsIpMode.Custom => config?[ip6Key] ?? "::1",
             _ => "::1"
+        };
+    }
+
+    public static string GetDnsHostname(DnsIpMode mode = DnsIpMode.Localhost/*, IConfiguration config = null*/)
+    {
+        return mode switch
+        {
+            DnsIpMode.Any => "localhost",
+            DnsIpMode.Localhost => "localhost",
+            DnsIpMode.Custom => "mydns.local", // currenlty only statically, not possible to define via config
+            _ => "localhost"
         };
     }
 
