@@ -1,12 +1,10 @@
-using Xunit;
 using Moq;
-using DualstackDnsServer.Utils;
 using ARSoft.Tools.Net.Dns;
 using Microsoft.Extensions.Logging;
-using DualstackDnsServer;
 using ARSoft.Tools.Net;
+using DualstackDnsServer.Services;
 
-namespace SimpleDnsTests
+namespace DualstackDnsServer
 {
     public class DefaultDnsQueryHandlerTest
     {

@@ -1,6 +1,8 @@
 namespace DualstackDnsServer;
 
 using DualstackDnsServer.RestApi;
+using System.Threading;
+using System.Threading.Tasks;
 
 public interface IDnsRecordManger
 {
@@ -11,6 +13,7 @@ public interface IDnsRecordManger
     int GetSessionCount(string sessionId);
     void UnregisterSession(string sessionId);
     void UnregisterAll();
+
 
     IEnumerable<DnsEntryDto> GetAllEntries();
 }

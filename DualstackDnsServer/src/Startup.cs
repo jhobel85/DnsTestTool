@@ -1,4 +1,6 @@
 ﻿#nullable enable
+using DualstackDnsServer.Services;
+
 namespace DualstackDnsServer;
 
 public class Startup
@@ -9,29 +11,27 @@ public class Startup
 
     public static void ConfigureServices(IServiceCollection services)
     {
-    #pragma warning disable IL2026
-#pragma warning disable IL2026
+        // Register UDP DNS client service
+        services.AddSingleton<IDnsUdpClientService, DnsUdpClientService>();
         services.AddSingleton<IDnsRecordManger, DnsRecordManger>();
         services.AddSingleton<Utils.IProcessManager, Utils.ProcessManager>();
         services.AddSingleton<Utils.IServerManager, Utils.ServerManager>();
-        services.AddSingleton<Utils.IDnsQueryHandler, Utils.DnsQueryHandler>(sp =>
-            new Utils.DnsQueryHandler(
+        services.AddSingleton<IDnsQueryHandler, DnsQueryHandler>(sp =>
+            new DnsQueryHandler(
                 sp.GetRequiredService<IDnsRecordManger>(),
-                sp.GetRequiredService<ILogger<Utils.DnsQueryHandler>>()
+                sp.GetRequiredService<ILogger<DnsQueryHandler>>()
             )
         );
-    #pragma warning restore IL2026
+    #pragma warning disable IL2026
     // Register System.Text.Json source generation context for DnsEntryDto
-#pragma warning disable IL2026
     MvcServiceCollectionExtensions.AddControllers(services)
         .AddJsonOptions(options =>
         {
         options.JsonSerializerOptions.TypeInfoResolverChain.Add(DualstackDnsServer.DnsJsonContext.Default);
         });
 #pragma warning restore IL2026
-        services.AddHostedService<DnsUdpListener>(sp =>
-            new DnsUdpListener(
-                sp.GetRequiredService<Utils.IDnsQueryHandler>(),
+        services.AddHostedService<DnsUdpListener>(sp => new DnsUdpListener(
+                sp.GetRequiredService<IDnsQueryHandler>(),
                 sp.GetRequiredService<IConfiguration>(),
                 sp.GetRequiredService<ILogger<DnsUdpListener>>()
             )

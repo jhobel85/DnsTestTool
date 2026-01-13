@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using DualstackDnsServer;
 using DualstackDnsServer.RestApi;
-using Xunit;
 
-namespace SimpleDnsTests
+namespace DualstackDnsServer
 {
     public class DnsApiControllerTest
     {

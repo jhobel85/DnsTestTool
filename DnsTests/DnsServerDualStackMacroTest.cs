@@ -1,10 +1,10 @@
-using System.Net;
-using System.Threading.Tasks;
-using Xunit;
-using DnsClient;//Macro;
+using DnsClient;
+using DualstackDnsServer;
+using DualstackDnsServer.Services;
 
-namespace DualstackDnsServer.Tests
-{    
+
+namespace DnsTests;
+
     public class DnsServerDualStackMacro(DnsServerFixture fixture) : IClassFixture<DnsServerFixture>
     {
         private const string TestDomain_V4 = "dualstack4.local";
@@ -19,16 +19,22 @@ namespace DualstackDnsServer.Tests
             // Arrange
             string dns_ip_v4 = DnsConst.GetDnsIp(DnsIpMode.Localhost);
             string dns_ip_v6 = DnsConst.GetDnsIpV6(DnsIpMode.Localhost);
-            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiHttp);
-            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiHttp);
-
+            var httpClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiHttp);
+            var httpClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiHttp);
             // Register both records
-            await dnsClientV4.RegisterAsync(TestDomain_V4, TestIp_V4, true);
-            await dnsClientV6.RegisterAsync(TestDomain_V6, TestIp_V6, true);
+            await httpClientV4.RegisterAsync(TestDomain_V4, TestIp_V4, true);
+            await httpClientV6.RegisterAsync(TestDomain_V6, TestIp_V6, true);
 
             // Act
-            var resolvedIpV4 = await ClientUtils.SendDnsQueryIPv4Async(dns_ip_v4, TestDomain_V4, DnsConst.UdpPort);
-            var resolvedIpV6 = await ClientUtils.SendDnsQueryIPv6Async(dns_ip_v6, TestDomain_V6, DnsConst.UdpPort);
+            var serverOptions = new ServerOptions
+            {
+                Ip = dns_ip_v4,
+                IpV6 = dns_ip_v6,
+                UdpPort = DnsConst.UdpPort
+            };
+            var udpClient = new DnsUdpClientService(serverOptions);
+            var resolvedIpV4 = await udpClient.QueryDnsIPv4Async(dns_ip_v4, TestDomain_V4, DnsConst.UdpPort);
+            var resolvedIpV6 = await udpClient.QueryDnsIPv6Async(dns_ip_v6, TestDomain_V6, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIpV4);
@@ -76,6 +82,14 @@ namespace DualstackDnsServer.Tests
             var registerTasks = ipv4Domains.Select(d => dnsClientV4.RegisterAsync(d.domain, d.ip, true))
                 .Concat(ipv6Domains.Select(d => dnsClientV6.RegisterAsync(d.domain, d.ip, true)));
             await Task.WhenAll(registerTasks);
+            
+            var serverOptions = new ServerOptions
+            {
+                Ip = dns_ip_v4,
+                IpV6 = dns_ip_v6,
+                UdpPort = DnsConst.UdpPort
+            };
+            var udpClientV4 = new DnsUdpClientService(serverOptions);
 
             try
             {
@@ -86,7 +100,7 @@ namespace DualstackDnsServer.Tests
                     v4Tasks.Add(Task.Run(async () =>
                     {
                         var cts = new CancellationTokenSource(5000);
-                        var resolvedIp = await ClientUtils.SendDnsQueryIPv4Async(dns_ip_v4, d.domain, DnsConst.UdpPort, cts.Token);
+                        var resolvedIp = await udpClientV4.QueryDnsIPv4Async(dns_ip_v4, d.domain, DnsConst.UdpPort, cts.Token);
                         Assert.Equal(d.ip, resolvedIp);
                     }));
                     //await Task.Delay(1); // 1ms delay between requests
@@ -98,7 +112,7 @@ namespace DualstackDnsServer.Tests
                     v6Tasks.Add(Task.Run(async () =>
                     {
                         var cts = new CancellationTokenSource(5000);
-                        var resolvedIp = await ClientUtils.SendDnsQueryIPv6Async(dns_ip_v6, d.domain, DnsConst.UdpPort, cts.Token);
+                        var resolvedIp = await udpClientV4.QueryDnsIPv6Async(dns_ip_v6, d.domain, DnsConst.UdpPort, cts.Token);
                         Assert.Equal(d.ip.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
                     }));
                     //await Task.Delay(1); // 1ms delay between requests
@@ -160,15 +174,22 @@ namespace DualstackDnsServer.Tests
                 string testDomain = useV6 ? "dualstack6.local" : "dualstack4.local";
                 string testIp = useV6 ? "fd00::101" : "192.168.1.101";
                 int apiPort = protocol == "https" ? DnsConst.ApiHttps : DnsConst.ApiHttp;
-                var dnsClient = new RestClient(dns_host, apiPort, protocol);
+                var httpClient = new RestClient(dns_host, apiPort, protocol);
 
-                await dnsClient.RegisterAsync(testDomain, testIp, true);
+                await httpClient.RegisterAsync(testDomain, testIp, true);
+                var serverOptions = new ServerOptions
+                {
+                    Ip = dns_host,
+                    IpV6 = dns_host,
+                    UdpPort = DnsConst.UdpPort
+                };
+                var udpClient = new DnsUdpClientService(serverOptions);
 
                 string resolvedIp;
                 if (useV6)
-                    resolvedIp = await ClientUtils.SendDnsQueryIPv6Async(dns_host, testDomain, DnsConst.UdpPort);
+                    resolvedIp = await udpClient.QueryDnsIPv6Async(dns_host, testDomain, DnsConst.UdpPort);
                 else
-                    resolvedIp = await ClientUtils.SendDnsQueryIPv4Async(dns_host, testDomain, DnsConst.UdpPort);
+                    resolvedIp = await udpClient.QueryDnsIPv4Async(dns_host, testDomain, DnsConst.UdpPort);
 
                 if (useV6)
                     Assert.Equal(testIp.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
@@ -176,7 +197,6 @@ namespace DualstackDnsServer.Tests
                     Assert.Equal(testIp, resolvedIp);
 
                 // Cleanup
-                await dnsClient.UnregisterAsync(testDomain);
+                await httpClient.UnregisterAsync(testDomain);
             }
     }
-}

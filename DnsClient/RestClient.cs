@@ -127,6 +127,28 @@ public class RestClient
         return int.TryParse(result, out var count) ? count : 0;
     }
 
+        /// <summary>
+    /// Query the DNS server using UDP via the HTTP API (/dns/query).
+    /// </summary>
+    /// <param name="domain">Domain name to resolve.</param>
+    /// <param name="dnsServer">DNS server IP address.</param>
+    /// <param name="port">DNS server port (default: 53).</param>
+    /// <param name="type">Record type: "A" or "AAAA" (default: "A").</param>
+    /// <returns>Resolved IP address or error message.</returns>
+    public async Task<string> QueryDnsAsync(string domain, string dnsServer, int port = 53, string type = "A")
+    {
+        var url = $"{serverUrl}/query?domain={domain}&dnsServer={dnsServer}&port={port}&type={type}";
+        var response = await httpClient.GetAsync(url).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
+        {
+            throw new HttpRequestException($"Error while querying DNS. HttpStatusCode={response.StatusCode}");
+        }
+        string result = "";
+        if (response.IsSuccessStatusCode)
+            result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        return result;
+    }
+
     /// <summary>
     /// Synchronous version of RegisterAsync
     /// </summary>

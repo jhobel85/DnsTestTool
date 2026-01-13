@@ -1,4 +1,7 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 
 #nullable enable
 namespace DualstackDnsServer;
@@ -8,7 +11,6 @@ public class DnsRecordManger : IDnsRecordManger
     private readonly ConcurrentDictionary<string, string> records = new();
     private readonly ConcurrentDictionary<string, ConcurrentBag<string>> sessions = new();
     private readonly object sessionLock = new();
-
     public DnsRecordManger() => Console.WriteLine("Server new instance");
 
     public void Register(string domain, string ip, string? sessionId = null)
@@ -72,4 +74,5 @@ public class DnsRecordManger : IDnsRecordManger
     {
         return records.Select(kvp => new RestApi.DnsEntryDto { Domain = kvp.Key, Ip = kvp.Value }).ToList();
     }
+
 }

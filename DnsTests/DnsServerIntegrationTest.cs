@@ -1,7 +1,10 @@
 using DnsClient;
+using DualstackDnsServer;
+using DualstackDnsServer.Services;
 
-namespace DualstackDnsServer.Tests
-{
+
+namespace DnsTests;
+
     public class DnsServerIntegrationTest(DnsServerFixture fixture) : IClassFixture<DnsServerFixture>
     {
     
@@ -19,10 +22,17 @@ namespace DualstackDnsServer.Tests
         {
             // Arrange: Register domain (assumes server is already running via fixture)
             string dns_ip = DnsConst.GetDnsIp();
-            var dnsClient = new RestClient(dns_ip, DnsConst.ApiHttp);
-            await dnsClient.RegisterAsync(TestDomain_V4, TestIp_V4, true);
+            var httpClient = new RestClient(dns_ip, DnsConst.ApiHttp);
+            await httpClient.RegisterAsync(TestDomain_V4, TestIp_V4, true);
             // Act: Send DNS query
-            var resolvedIp = await ClientUtils.SendDnsQueryIPv4Async(dns_ip, TestDomain_V4, DnsConst.UdpPort);
+            var serverOptions = new ServerOptions
+            {
+                Ip = dns_ip,
+                IpV6 = string.Empty,
+                UdpPort = DnsConst.UdpPort
+            };
+            var udpClient = new DnsUdpClientService(serverOptions);
+            var resolvedIp = await udpClient.QueryDnsIPv4Async(dns_ip, TestDomain_V4, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIp);
@@ -33,15 +43,20 @@ namespace DualstackDnsServer.Tests
         {
             // Arrange: Register domain (assumes server is already running via fixture)
             string dns_ip = DnsConst.GetDnsIpV6();
-            var dnsClient = new RestClient(dns_ip, DnsConst.ApiHttp);
-            await dnsClient.RegisterAsync(TestDomain_V6, TestIp_V6, true);
+            var httpClient = new RestClient(dns_ip, DnsConst.ApiHttp);
+            await httpClient.RegisterAsync(TestDomain_V6, TestIp_V6, true);
 
             // Act: Send DNS query (AAAA record)
-            var resolvedIp = await ClientUtils.SendDnsQueryIPv6Async(dns_ip, TestDomain_V6, DnsConst.UdpPort);
+            var serverOptions = new ServerOptions
+            {
+                Ip = string.Empty,
+                IpV6 = dns_ip,
+                UdpPort = DnsConst.UdpPort
+            };
+            var udpClient = new DnsUdpClientService(serverOptions);
+            var resolvedIp = await udpClient.QueryDnsIPv6Async(dns_ip, TestDomain_V6, DnsConst.UdpPort);
 
             // Assert
             Assert.Equal(TestIp_V6.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
         }
     }
-    
-}

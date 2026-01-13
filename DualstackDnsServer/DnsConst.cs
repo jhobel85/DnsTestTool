@@ -9,7 +9,7 @@ public static class DnsConst
     public const string FRAMEWORK = "net8.0";
     public const string DncControllerName = "dns";
     public const string DNS_ROOT = "/" + DncControllerName;
-    public const int UdpPort = 53;
+    public const int UdpPort = 53; // use non-privileged port to avoid conflicts with system DNS
     public const int ApiHttp = 80;
     public const int ApiHttps = 443;
 

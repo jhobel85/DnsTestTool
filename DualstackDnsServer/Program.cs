@@ -8,13 +8,26 @@ namespace DualstackDnsServer
     public static class Program
     {
         public static void Main(string[] args)
-        {
+        {            
             CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
             IConfigurationRoot config = CommandLineConfigurationExtensions.AddCommandLine((IConfigurationBuilder)new ConfigurationBuilder(), args).Build();
+            // Populate ServerOptions
+            var serverOptions = new ServerOptions
+            {
+                Ip = DnsConst.ResolveDnsIp(config),
+                IpV6 = DnsConst.ResolveDnsIpV6(config),
+                ApiPort = int.TryParse(DnsConst.ResolveApiPort(config), out var apiPort) ? apiPort : DnsConst.ApiHttp,
+                UdpPort = int.TryParse(DnsConst.ResolveUdpPort(config), out var udpPort) ? udpPort : DnsConst.UdpPort,
+                CertPath = DnsConst.GetCertPath(config),
+                CertPassword = DnsConst.GetCertPassword(config),
+                EnableHttp = DnsConst.IsHttpEnabled(config, args),
+                Args = args
+            };
+            
             var urlList = new List<string>();
             if (DnsConst.IsHttpEnabled(config, args))
             {
@@ -26,11 +39,15 @@ namespace DualstackDnsServer
             var urls = urlList.ToArray();
 
             // Read certPath and certPassword from args or config
-            string certPath = DnsConst.GetCertPath(config);
-            string certPassword = DnsConst.GetCertPassword(config);
+            string certPath = serverOptions.CertPath;
+            string certPassword = serverOptions.CertPassword;
 
             return GenericHostBuilderExtensions.ConfigureWebHostDefaults(Host.CreateDefaultBuilder(args), (Action<IWebHostBuilder>)(webBuilder =>
             {
+                webBuilder.ConfigureServices(services =>
+                {
+                    services.AddSingleton(serverOptions);
+                });
                 WebHostBuilderExtensions.UseStartup<Startup>(webBuilder);
                 webBuilder.ConfigureKestrel((context, kestrelOptions) =>
                 {

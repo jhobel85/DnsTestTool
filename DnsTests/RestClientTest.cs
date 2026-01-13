@@ -1,8 +1,5 @@
-using Xunit;
-using DnsClient;
+namespace DnsClient;
 
-namespace SimpleDnsTests
-{    
     public class RestClientTest
     {
         [Fact]
@@ -12,5 +9,3 @@ namespace SimpleDnsTests
             Assert.NotNull(client);
         }
     }
-
-}

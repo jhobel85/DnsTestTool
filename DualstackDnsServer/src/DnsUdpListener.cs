@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 
 using Microsoft.Extensions.Logging;
-using DualstackDnsServer.Utils;
+using DualstackDnsServer.Services;
 
 #nullable enable //compiler will warn if might be dereferencing a variable that could be null
 namespace DualstackDnsServer;

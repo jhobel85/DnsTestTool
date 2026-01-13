@@ -1,8 +1,9 @@
 using DualstackDnsServer.Utils;
 using Xunit;
 
-namespace DualstackDnsServer.Tests
-{
+
+namespace DualstackDnsServer;
+
     public class DnsServerFixture : IDisposable
     {
         private readonly ServerManager serverManager = new ServerManager();
@@ -59,4 +60,3 @@ private void KillAnyRunningServer()
             }
         }
     }
-}

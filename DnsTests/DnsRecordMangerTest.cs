@@ -1,8 +1,6 @@
-using Xunit;
-using DualstackDnsServer;
 
-namespace SimpleDnsTests
-{   
+namespace DualstackDnsServer;
+
     public class DnsRecordMangerTest
     {
         [Fact]
@@ -14,4 +12,3 @@ namespace SimpleDnsTests
             Assert.Equal("1.2.3.4", ip);
         }
     }    
-}

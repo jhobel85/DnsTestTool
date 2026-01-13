@@ -1,7 +1,7 @@
 using Xunit;
 using DualstackDnsServer.Utils;
 
-namespace SimpleDnsTests
+namespace DualstackDnsServer
 {
     public class DefaultServerManagerTest
     {

@@ -1,6 +1,6 @@
-namespace DualstackDnsServer.Utils;
-
 using ARSoft.Tools.Net.Dns;
+
+namespace DualstackDnsServer.Services;
 
 public interface IDnsQueryHandler
 {

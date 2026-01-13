@@ -2,17 +2,38 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace DualstackDnsServer.Tests;
+namespace DualstackDnsServer.Services;
 
-public static class ClientUtils
+public class DnsUdpClientService : IDnsUdpClientService
 {
+    private readonly ServerOptions _serverOptions;
     public const int ClientTimeout = 5000;
 
-
-    public static async Task<string> SendDnsQueryAsync(string dns_ip, string domain, int port, AddressFamily family, QueryType type, CancellationToken cancellationToken = default)
+    public DnsUdpClientService(ServerOptions serverOptions)
     {
+        _serverOptions = serverOptions;
+    }
+        
+    public async Task<string> QueryDnsAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        // Try IPv6 (AAAA) first
+        string ipv6 = await QueryDnsAsync(_serverOptions.IpV6, domain, _serverOptions.UdpPort, QueryType.AAAA, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(ipv6))
+            return ipv6;
+
+        // Then try IPv4 (A)
+        string ipv4 = await QueryDnsAsync(_serverOptions.Ip, domain, _serverOptions.UdpPort, QueryType.A, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(ipv4))
+            return ipv4;
+
+        return string.Empty;
+    }
+
+    public async Task<string> QueryDnsAsync(string dnsServer, string domain, int port, QueryType type, CancellationToken cancellationToken = default)
+    {
+        AddressFamily family = type == QueryType.A ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6;
         using var client = new UdpClient(family);
-        client.Connect(dns_ip, port);
+        client.Connect(dnsServer, port);
         var query = BuildDnsQueryGeneric(domain, type);
         await client.SendAsync(query, query.Length);
         var receiveTask = client.ReceiveAsync(cancellationToken).AsTask();
@@ -35,14 +56,11 @@ public static class ClientUtils
         }
     }
 
-    public static Task<string> SendDnsQueryIPv4Async(string dns_ip, string domain, int port, CancellationToken cancellationToken = default)
-        => SendDnsQueryAsync(dns_ip, domain, port, AddressFamily.InterNetwork, QueryType.A, cancellationToken);
+    public Task<string> QueryDnsIPv4Async(string dns_ip, string domain, int port, CancellationToken cancellationToken = default)
+        => QueryDnsAsync(dns_ip, domain, port, QueryType.A, cancellationToken);
 
-    public static Task<string> SendDnsQueryIPv6Async(string dns_ip, string domain, int port, CancellationToken cancellationToken = default)
-        => SendDnsQueryAsync(dns_ip, domain, port, AddressFamily.InterNetworkV6, QueryType.AAAA, cancellationToken);
-
-
-    public enum QueryType { A, AAAA }
+    public Task<string> QueryDnsIPv6Async(string dns_ip, string domain, int port, CancellationToken cancellationToken = default)
+        => QueryDnsAsync(dns_ip, domain, port, QueryType.AAAA, cancellationToken);
 
     public static byte[] BuildDnsQueryGeneric(string domain, QueryType type)
     {
