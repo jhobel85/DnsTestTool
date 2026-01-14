@@ -44,11 +44,14 @@ namespace DualstackDnsServer
             
             var urlList = new List<string>();
             bool httpEnabled = DnsConst.IsHttpEnabled(config, args);
+            if (httpEnabled)
+            {
+                urlList.Add(DnsConst.ResolveHttpUrl(config));
+                urlList.Add(DnsConst.ResolveHttpUrlV6(config));
+            }
             urlList.Add(DnsConst.ResolveHttpsUrl(config));
             urlList.Add(DnsConst.ResolveHttpsUrlV6(config));
             var urls = urlList.ToArray();
-            Console.WriteLine("[INFO] Binding endpoints:");
-            foreach (var u in urls) Console.WriteLine($"  {u}");
 
             // Read certPath and certPassword from args or config
             string certPath = serverOptions.CertPath;

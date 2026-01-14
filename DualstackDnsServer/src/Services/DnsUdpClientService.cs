@@ -16,6 +16,10 @@ public class DnsUdpClientService : IDnsUdpClientService
         
     public async Task<string> QueryDnsAsync(string domain, CancellationToken cancellationToken = default)
     {
+        // Normalize domain: remove trailing dot if present
+        if (!string.IsNullOrEmpty(domain) && domain.EndsWith("."))
+            domain = domain.TrimEnd('.');
+
         // Try IPv6 (AAAA) first
         string ipv6 = await QueryDnsAsync(_serverOptions.IpV6, domain, _serverOptions.UdpPort, QueryType.AAAA, cancellationToken);
         if (!string.IsNullOrWhiteSpace(ipv6))
@@ -31,6 +35,10 @@ public class DnsUdpClientService : IDnsUdpClientService
 
     public async Task<string> QueryDnsAsync(string dnsServer, string domain, int port, QueryType type, CancellationToken cancellationToken = default)
     {
+        // Normalize domain: remove trailing dot if present
+        if (!string.IsNullOrEmpty(domain) && domain.EndsWith("."))
+            domain = domain.TrimEnd('.');
+
         AddressFamily family = type == QueryType.A ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6;
         using var client = new UdpClient(family);
         client.Connect(dnsServer, port);
