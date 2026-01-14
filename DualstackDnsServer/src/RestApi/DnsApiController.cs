@@ -12,7 +12,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpPost("register")]
     public IActionResult Register(string domain, string ip)
     {
-        Console.WriteLine("I will try register domain: " + domain + " ip: " + ip);
+        Console.WriteLine("Register domain: " + domain + " ip: " + ip);
         recordManger.Register(domain, ip);
         return (IActionResult)Ok();
     }
@@ -20,7 +20,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpPost("register/session")]
     public IActionResult RegisterSession(string domain, string ip, string sessionId)
     {
-        Console.WriteLine("I will try register domain in session context: " + domain + " ip: " + ip);
+        Console.WriteLine("Register domain in session context: " + domain + " ip: " + ip);
         recordManger.Register(domain, ip, sessionId);
         return (IActionResult)Ok();
     }
@@ -28,7 +28,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpPost("unregister")]
     public IActionResult Unregister(string domain)
     {
-        Console.WriteLine("I will try unregister domain:" + domain);
+        Console.WriteLine("Unregister domain:" + domain);
         recordManger.Unregister(domain);
         return (IActionResult)Ok();
     }
@@ -36,7 +36,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpPost("unregister/session")]
     public IActionResult UnregisterSession(string sessionId)
     {
-        Console.WriteLine("I will try unregister session:" + sessionId);
+        Console.WriteLine("Unregister session:" + sessionId);
         recordManger.UnregisterSession(sessionId);
         return (IActionResult)Ok();
     }
@@ -51,7 +51,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpGet("resolve")]
     public IActionResult Resolve(string domain)
     {
-        Console.WriteLine("I will try resolve domain:" + domain);
+        Console.WriteLine("Resolve domain:" + domain);
         string? str = recordManger.Resolve(domain);
         Console.WriteLine("Ip is: " + str);
         return (IActionResult)Ok(str ?? "");
@@ -61,7 +61,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpGet("entries")]
     public ActionResult<IEnumerable<DnsEntryDto>> GetAllEntries()
     {
-        Console.WriteLine("I will try get all DNS entries");
+        Console.WriteLine("Get all DNS entries");
         var entries = recordManger.GetAllEntries();
         return Ok(entries);
     }
@@ -69,7 +69,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpGet("count")]
     public IActionResult RecordsCount()
     {
-        Console.WriteLine("I will try get records count");
+        Console.WriteLine("Get records count");
         int count = recordManger.GetCount();
         Console.WriteLine("All records count is: " + count.ToString());
         return (IActionResult)Ok((object)count);
@@ -78,7 +78,7 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
     [HttpGet("count/session")]
     public IActionResult RecordsSessionCount(string sessionId)
     {
-        Console.WriteLine("I will try get records count of session:" + sessionId);
+        Console.WriteLine("Get records count of session:" + sessionId);
         int sessionCount = recordManger.GetSessionCount(sessionId);
         Console.WriteLine("Records count of session is: " + sessionCount.ToString());
         return (IActionResult)Ok((object)sessionCount);

@@ -11,34 +11,39 @@ Reliable Registration: By awaiting async registration methods, you ensure that a
 Test Stability: Async/await ensures that each step (register, resolve, unregister) completes in order, making your dual-stack tests pass consistently.
 
 # How to start the server
-1] Default run: DualstackDnsServer.exe
-- IPv4 will be localhost 172.0.0.1, UDP port 53 and API port 443 (HTTPS)
-- IPv6 will be localhost [::1], UDP port 53 and API port 443 (HTTPS)
-- HTTP disabled by default
 
-2] Custom run: DualstackDnsServer.exe --ip 192.168.10.1 --ip6 fd00:10::1 --apiPort 8443 --udpPort 10053 --http true --cert "C:\mydns.local.pfx" --certPassw "P@ssw0rd!"
-- custom IPv4 and IPv6
-- custom ports
-- select certificate for custom IP
-- HTTP can be enabled by "--http true", will always run on port 80
-- If any of parameters not be specified default values be used.
+1] Default run: DualstackDnsServer.exe
+	- IPv4 will be localhost 127.0.0.1, UDP port 53 and API port 443 (HTTPS)
+	- IPv6 will be localhost [::1], UDP port 53 and API port 443 (HTTPS)
+	- HTTP disabled by default
+
+2] Custom run (double-dash arguments only):
+	DualstackDnsServer.exe --ip 192.168.10.1 --ip6 fd00:10::1 --apiPort 8443 --udpPort 10053 --http true --cert "C:\mydns.local.pfx" --certPassw "P@ssw0rd!" --verbose
+	- All arguments must use double dashes (e.g., --ip, --http, --verbose)
+	- Custom IPv4 and IPv6
+	- Custom ports
+	- Select certificate for custom IP
+	- HTTP can be enabled by "--http true", will always run on port 80
+	- If any parameters are not specified, default values will be used.
 
 
 mydns.local
 
 # Rest API tests on localhost
-## IPv4 Register and resovle:
+## IPv4 Register and resolve:
 curl.exe -X POST "https://localhost:443/dns/register?domain=ip4.com&ip=192.168.10.20"
 curl.exe -X POST "http://127.0.0.1:80/dns/register?domain=ip4.com&ip=192.168.10.21"
+curl.exe -X POST "https://localhost:443/dns/register?domain=cpu30.local&ip=192.168.0.30"
 
 curl.exe -X GET "https://localhost:443/dns/resolve?domain=ip4.com"
 curl.exe -X GET "http://127.0.0.1:80/dns/resolve?domain=ip4.com"
 
-curl -X GET "https://localhost:443/dns/entries"
+curl.exe -X GET "https://localhost:443/dns/entries"
 curl.exe -X GET "http://127.0.0.1:80/dns/entries"
 
 curl.exe -X GET "https://localhost:443/dns/query?domain=ip4.com"
-curl.exe -X GET "http://127.0.0.1:80//dns/query?domain=ip4.com"
+curl.exe -X GET "http://127.0.0.1:80/dns/query?domain=ip4.com"
+curl.exe -X GET "https://localhost:443/dns/query?domain=cpu30.local."
 
 ## IPv6 Register and resolve:
 curl.exe -X POST "https://localhost:443/dns/register?domain=ip6.com&ip=fd00:10::20"
@@ -71,6 +76,7 @@ The server resolves the name internally, without using DNS protocol. No UDP pack
 Therfore Resolve via nslookup (work only with port 53):
 
 nslookup mytest1234.test. 127.0.0.1
+nslookup cpu30.local. 127.0.0.1
 
 nslookup -q=AAAA ip6.com ::1
 

@@ -22,6 +22,30 @@ public static class DnsConst
     private const string udpPortKey = "udpPort";
     public const string certPathKey = "cert";
     public const string certPasswordKey = "certPassw";
+
+    private static readonly string[] verboseKeys = ["v", "verbose"];
+
+    /// <summary>
+    /// Checks if verbose mode is enabled in configuration (supports --v or --verbose)
+    /// </summary>
+    public static bool IsVerbose(IConfiguration config)
+    {
+        foreach (var key in verboseKeys)
+        {
+            var value = config[key];
+            if (value != null)
+            {
+                // If --v or --verbose is present with no value, treat as false (default)
+                if (string.IsNullOrEmpty(value))
+                    return false;
+                if (bool.TryParse(value, out var parsed))
+                    return parsed;
+                if (string.Equals(value, "1"))
+                    return true;
+            }
+        }
+        return false;
+    }
     
         /// <summary>
     /// Gets the certificate path from configuration.
@@ -45,22 +69,20 @@ public static class DnsConst
 
     /// <summary>
     /// Determines if HTTP endpoints should be enabled based on config/args. Default: disabled.
-    /// Enable with --http, --http=true, or --http=1
+    /// Enable with --http, --http=true, or --http=1 (only double-dash supported)
     /// </summary>
     public static bool IsHttpEnabled(IConfiguration config, string[] args)
     {
         var httpValue = config["http"];
-        if (!string.IsNullOrEmpty(httpValue))
+        if (httpValue != null)
         {
+            // If --http is present with no value, treat as true
+            if (string.IsNullOrEmpty(httpValue))
+                return true;
             if (bool.TryParse(httpValue, out var parsed))
                 return parsed;
             if (string.Equals(httpValue, "1"))
                 return true;
-        }
-        else if (args != null && args.Any(a => a.Equals("--http", StringComparison.OrdinalIgnoreCase)))
-        {
-            // Support for --http as a flag
-            return true;
         }
         return DEFAULT_ENABLE_HTTP;
     }

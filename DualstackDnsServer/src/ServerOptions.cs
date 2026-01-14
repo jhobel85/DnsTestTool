@@ -9,5 +9,8 @@ public class ServerOptions
     public string CertPath { get; set; } = "";
     public string CertPassword { get; set; } = "";
     public bool EnableHttp { get; set; }
+
+    public bool IsVerbose { get; set; }
+
     public string[] Args { get; set; } = [];
 }
