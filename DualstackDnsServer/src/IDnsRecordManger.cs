@@ -14,6 +14,5 @@ public interface IDnsRecordManger
     void UnregisterSession(string sessionId);
     void UnregisterAll();
 
-
     IEnumerable<DnsEntryDto> GetAllEntries();
 }

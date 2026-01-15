@@ -15,7 +15,7 @@ public class DnsUdpListener : BackgroundService
 {
     private readonly DnsServer udpServer;
     private readonly IDnsQueryHandler queryHandler;
-    private static readonly SemaphoreSlim QuerySemaphore = new(16); // e.g., max 16 concurrent queries
+    private static readonly SemaphoreSlim QuerySemaphore = new(500); // e.g., max 500 concurrent queries
     private readonly ILogger<DnsUdpListener> _logger;
     private readonly ServerOptions _serverOptions;
 
