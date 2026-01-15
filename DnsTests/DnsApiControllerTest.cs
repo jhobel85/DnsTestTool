@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using DualstackDnsServer.RestApi;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DualstackDnsServer
 {
@@ -21,6 +23,39 @@ namespace DualstackDnsServer
             var result = _controller.Register("example.com", "1.2.3.4");
             _mockRecordManager.Verify(m => m.Register("example.com", "1.2.3.4", null), Times.Once);
             Assert.IsType<OkResult>(result);
+        }
+
+        [Fact]
+        public void RegisterBulk_ReturnsOk()
+        {
+            var entries = new List<DnsEntryDto>
+            {
+                new DnsEntryDto { Domain = "example.com", Ip = "1.2.3.4" },
+                new DnsEntryDto { Domain = "test.com", Ip = "5.6.7.8" }
+            };
+
+            var result = _controller.RegisterBulk(entries, "session1");
+
+            _mockRecordManager.Verify(m => m.RegisterMany(
+                It.Is<IEnumerable<DnsEntryDto>>(e => e.SequenceEqual(entries)),
+                "session1"), Times.Once);
+
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            // Use System.Text.Json to parse the anonymous object
+            var json = System.Text.Json.JsonSerializer.Serialize(okResult.Value);
+            using (var doc = System.Text.Json.JsonDocument.Parse(json))
+            {
+                var root = doc.RootElement;
+                Assert.True(root.TryGetProperty("Registered", out var registeredElement));
+                Assert.Equal(entries.Count, registeredElement.GetInt32());
+            }
+        }
+
+        [Fact]
+        public void RegisterBulk_NullEntries_ReturnsBadRequest()
+        {
+            var result = _controller.RegisterBulk(null, null);
+            Assert.IsType<BadRequestObjectResult>(result);
         }
 
         [Fact]

@@ -145,12 +145,6 @@ public static class DnsConst
 #pragma warning restore S4423
     }
 
-    public static string ResolveHttpsUrl(IConfigurationRoot config)
-    {
-        string ipRes = ResolveDnsIp(config);
-        return $"https://{ipRes}:{ApiHttps}";
-    }
-
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S4423", Justification = "HTTP is used only for local development and testing; HTTPS is enforced in production.")]
     public static string ResolveHttpUrlV6(IConfigurationRoot config)
     {
@@ -160,6 +154,7 @@ public static class DnsConst
 #pragma warning restore S4423
     }
 
+    // Deprecated: Use dynamic port in Program.cs
     public static string ResolveHttpsUrlV6(IConfigurationRoot config)
     {
         string ipRes = ResolveDnsIpV6(config);

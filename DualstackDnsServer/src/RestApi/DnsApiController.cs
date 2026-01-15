@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 #nullable enable
 namespace DualstackDnsServer.RestApi;
@@ -15,6 +16,15 @@ public class DnsApiController(IDnsRecordManger recordManger) : ControllerBase
         Console.WriteLine("Register domain: " + domain + " ip: " + ip);
         recordManger.Register(domain, ip);
         return (IActionResult)Ok();
+    }
+
+    [HttpPost("register/bulk")]
+    public IActionResult RegisterBulk([FromBody] IEnumerable<DnsEntryDto> entries, string? sessionId = null)
+    {
+        if (entries == null)
+            return BadRequest("Entries are required.");
+        recordManger.RegisterMany(entries, sessionId);
+        return Ok(new { Registered = entries.Count() });
     }
 
     [HttpPost("register/session")]

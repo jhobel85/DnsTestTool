@@ -33,13 +33,16 @@ namespace DualstackDnsServer
             
             var urlList = new List<string>();
             bool httpEnabled = DnsConst.IsHttpEnabled(config, args);
+            apiPort = serverOptions.ApiPort;
             if (httpEnabled)
             {
-                urlList.Add(DnsConst.ResolveHttpUrl(config));
-                urlList.Add(DnsConst.ResolveHttpUrlV6(config));
+                // HTTP URLs (for dev/testing)
+                urlList.Add($"http://{ip}:{apiPort}");
+                urlList.Add($"http://[{ipV6}]:{apiPort}");
             }
-            urlList.Add(DnsConst.ResolveHttpsUrl(config));
-            urlList.Add(DnsConst.ResolveHttpsUrlV6(config));
+            // HTTPS URLs (production/dev)
+            urlList.Add($"https://{ip}:{apiPort}");
+            urlList.Add($"https://[{ipV6}]:{apiPort}");
             var urls = urlList.ToArray();
 
             // Read certPath and certPassword from args or config
@@ -95,20 +98,27 @@ namespace DualstackDnsServer
 
                         foreach (var addr in addresses)
                         {
-                            kestrelOptions.Listen(addr, port, listenOptions =>
+                            try
                             {
-                                if (scheme == "https")
+                                kestrelOptions.Listen(addr, port, listenOptions =>
                                 {
-                                    if (!string.IsNullOrEmpty(certPath) && !string.IsNullOrEmpty(certPassword))
+                                    if (scheme == "https")
                                     {
-                                        listenOptions.UseHttps(certPath, certPassword);
+                                        if (!string.IsNullOrEmpty(certPath) && !string.IsNullOrEmpty(certPassword))
+                                        {
+                                            listenOptions.UseHttps(certPath, certPassword);
+                                        }
+                                        else
+                                        {
+                                            listenOptions.UseHttps(); // fallback to default cert (e.g., dev cert)
+                                        }
                                     }
-                                    else
-                                    {
-                                        listenOptions.UseHttps(); // fallback to default cert (e.g., dev cert)
-                                    }
-                                }
-                            });
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[ERROR] Failed to bind {scheme.ToUpper()} endpoint {addr}:{port} - {ex.GetType().Name}: {ex.Message}");
+                            }
                         }
                     }
                 });

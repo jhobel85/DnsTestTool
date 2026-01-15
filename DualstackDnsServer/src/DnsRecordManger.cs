@@ -21,6 +21,16 @@ public class DnsRecordManger : IDnsRecordManger
         AddSessionItem(sessionId, domain);
     }
 
+    public void RegisterMany(IEnumerable<RestApi.DnsEntryDto> entries, string? sessionId = null)
+    {
+        foreach (var entry in entries)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Domain) || string.IsNullOrWhiteSpace(entry.Ip))
+                continue;
+            Register(entry.Domain, entry.Ip, sessionId);
+        }
+    }
+
     public void Unregister(string domain) => records.TryRemove(domain, out _);
 
     public string? Resolve(string domain)

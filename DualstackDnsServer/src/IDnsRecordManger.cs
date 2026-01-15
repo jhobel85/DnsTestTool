@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 public interface IDnsRecordManger
 {
     void Register(string domain, string ip, string? sessionId = null);
+    void RegisterMany(IEnumerable<DnsEntryDto> entries, string? sessionId = null);
     void Unregister(string domain);
     string? Resolve(string domain);
     int GetCount();

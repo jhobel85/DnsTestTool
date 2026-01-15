@@ -50,12 +50,12 @@ curl.exe -X POST "https://localhost:443/dns/register?domain=ip6.com&ip=fd00:10::
 curl.exe -g -X POST "http://[::1]:80/dns/register?domain=ip6.com&ip=fd00:10::21"
 curl.exe -X POST "https://localhost:443/dns/register?domain=cpu30ipv6.local&ip=fd00::30"
 
-
 curl.exe -X GET "https://localhost:443/dns/resolve?domain=ip6.com"
 curl.exe -g -X GET "http://[::1]:80/dns/resolve?domain=ip6.com"
 
 curl.exe -X GET "https://localhost:443/dns/entries"
 curl.exe -g -X GET "http://[::1]:80/dns/entries"
+curl.exe -X GET "https://localhost:443/dns/query?domain=cpu30ipv6.local."
 
 
 ## PowerShell syntax:

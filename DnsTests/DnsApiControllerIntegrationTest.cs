@@ -19,6 +19,43 @@ namespace DualstackDnsServer
             };
         }
 
+        [Fact]
+        public async Task RegisterBulk_RegistersManyRecordsSuccessfully()
+        {
+            // Arrange: Generate 100 bulk records
+            var bulkRecords = new List<object>();
+            for (int i = 1; i <= 100; i++)
+            {
+                string domain = $"bulk{i}.example.com";
+                string ip = i % 2 == 0 ? $"10.0.0.{i}" : $"2001:db8::{i}";
+                bulkRecords.Add(new { domain, ip });
+            }
+            var json = System.Text.Json.JsonSerializer.Serialize(bulkRecords);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            // Act: Call the RegisterBulk endpoint (route is /dns/register/bulk)
+            var response = await _client.PostAsync("/dns/register/bulk", content);
+
+            // Assert: Should succeed and return registered count
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            using (var doc = System.Text.Json.JsonDocument.Parse(responseBody))
+            {
+                var root = doc.RootElement;
+                Assert.True(root.TryGetProperty("registered", out var registeredElement));
+                Assert.Equal(100, registeredElement.GetInt32());
+            }
+
+            // Verify each record is registered by querying
+            foreach (dynamic rec in bulkRecords)
+            {
+                var queryResp = await _client.GetAsync($"/dns/query?domain={rec.domain}");
+                queryResp.EnsureSuccessStatusCode();
+                var queryContent = await queryResp.Content.ReadAsStringAsync();
+                Assert.Contains((string)rec.ip, queryContent);
+            }
+        }
+
             [Fact]
             public async Task Query_Endpoint_ResolvesIPv4OrIPv6_DomainOnly()
             {
