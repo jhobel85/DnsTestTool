@@ -1,0 +1,27 @@
+@startuml
+!define RECTANGLE class
+
+RECTANGLE WebServer {
+  REST API
+}
+
+RECTANGLE DNSRecordManager {
+  CRUD, Storage
+}
+
+RECTANGLE DnsServer {
+  UDP/TCP Listener
+  IPv4 Stack
+  IPv6 Stack
+}
+
+WebServer --> DNSRecordManager : API calls
+DnsServer --> DNSRecordManager : Query/Update records
+DNSRecordManager --> "DNS Record Dictonary" : Data access
+
+WebServer -down-> DnsServer : Controls/Configures
+
+DnsServer -left-> "IPv4 Network" : Listens
+DnsServer -right-> "IPv6 Network" : Listens
+
+@enduml

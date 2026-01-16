@@ -22,7 +22,8 @@ namespace DualstackDnsServer
             {
                 Ip = ip,
                 IpV6 = ipV6,
-                ApiPort = int.TryParse(DnsConst.ResolveApiPort(config), out var apiPort) ? apiPort : DnsConst.ApiHttp,
+                // Default HTTPS port is 443; HTTP (if enabled) stays on 80
+                ApiPort = int.TryParse(DnsConst.ResolveApiPort(config), out var apiPort) ? apiPort : DnsConst.ApiHttps,
                 UdpPort = int.TryParse(DnsConst.ResolveUdpPort(config), out var udpPort) ? udpPort : DnsConst.UdpPort,
                 CertPath = DnsConst.GetCertPath(config),
                 CertPassword = DnsConst.GetCertPassword(config),
@@ -33,16 +34,17 @@ namespace DualstackDnsServer
             
             var urlList = new List<string>();
             bool httpEnabled = DnsConst.IsHttpEnabled(config, args);
-            apiPort = serverOptions.ApiPort;
+            var httpsPort = serverOptions.ApiPort;
+            var httpPort = DnsConst.ApiHttp;
             if (httpEnabled)
             {
                 // HTTP URLs (for dev/testing)
-                urlList.Add($"http://{ip}:{apiPort}");
-                urlList.Add($"http://[{ipV6}]:{apiPort}");
+                urlList.Add($"http://{ip}:{httpPort}");
+                urlList.Add($"http://[{ipV6}]:{httpPort}");
             }
             // HTTPS URLs (production/dev)
-            urlList.Add($"https://{ip}:{apiPort}");
-            urlList.Add($"https://[{ipV6}]:{apiPort}");
+            urlList.Add($"https://{ip}:{httpsPort}");
+            urlList.Add($"https://[{ipV6}]:{httpsPort}");
             var urls = urlList.ToArray();
 
             // Read certPath and certPassword from args or config

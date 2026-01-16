@@ -132,7 +132,7 @@ public static class DnsConst
         return GetDnsIpV6(DnsIpMode.Custom, config);
     }
 
-    public static string ResolveApiPort(IConfigurationRoot config) => config[apiPortKey] ?? ApiHttp.ToString();
+    public static string ResolveApiPort(IConfigurationRoot config) => config[apiPortKey] ?? ApiHttps.ToString();
     public static string ResolveUdpPort(IConfiguration config) => config[udpPortKey] ?? UdpPort.ToString();
 
     
