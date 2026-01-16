@@ -22,6 +22,12 @@ DualstackDnsServer.exe
 DualstackDnsServer.exe --ip 192.168.10.1 --ip6 fd00:10::1 --apiPort 8443 --udpPort 10053 --http true --cert "C:\mydns.local.pfx" --certPassw "P@ssw0rd!" --verbose true
 ```
 
+## Run mostly used with custom IPv4 (!registered previously on the network card!)
+
+```sh
+DualstackDnsServer.exe --ip 192.168.10.1
+```
+
 | Argument | Description | Default |
 |----------|-------------|---------|
 | `--ip` | IPv4 address to bind | `127.0.0.1` |
