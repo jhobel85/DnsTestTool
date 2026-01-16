@@ -92,7 +92,7 @@ nslookup -q=AAAA ip6.com ::1
 
 # Architecture & Modules
 
-![alt text](image.png)
+![alt text](system_overview.png)
 
 ---
 
