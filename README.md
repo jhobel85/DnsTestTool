@@ -13,9 +13,8 @@ DualstackDnsServer.exe
 ```
 
 - IPv4: `127.0.0.1`, UDP port `53`, HTTPS API port `443`
-- IPv6: `[::1]`, UDP port `53`, HTTPS API port `443`
+- IPv6: disabled by default (enable with `--ip6`)
 - HTTP disabled by default
-
 
 ## Run with custom IPv4 and http enabled
 
@@ -27,15 +26,21 @@ DualstackDnsServer.exe --ip 192.168.10.1 --http true
 
 ## Custom Run (double-dash arguments only)
 
+Pattern: 
+
+Usage: DualstackDnsServer [--ip <IPv4>] [--ip6 <IPv6>] [--portHttp <port>] [--portHttps <port>] [--portUdp <port>] [--http] [--cert <path>] [--certPassw <password>] [--v|--verbose]
+
+Example:
 ```sh
-DualstackDnsServer.exe --ip 192.168.10.1 --ip6 fd00:10::1 --apiPort 8443 --udpPort 10053 --http true --cert "C:\mydns.local.pfx" --certPassw "P@ssw0rd!" --verbose true
+DualstackDnsServer.exe --ip 192.168.10.1 --ip6 fd00:10::1 --portHttps 8443 --portHttp 8080 --udpPort 10053 --http true --cert "C:\mydns.local.pfx" --certPassw "P@ssw0rd!" --verbose true
 ```
 
 | Argument | Description | Default |
 |----------|-------------|---------|
-| `--ip` | IPv4 address to bind | `127.0.0.1` |
-| `--ip6` | IPv6 address to bind | `::1` |
-| `--apiPort` | HTTPS API port | `443` |
+| `--ip` | IPv4 address to bind | `127.0.0.1` (used if `--ip` is omitted or empty) |
+| `--ip6` | IPv6 address to bind | _disabled unless provided_ |
+| `--portHttps` | HTTPS API port | `443` |
+| `--portHttp` | HTTP port (when enabled) | `80` |
 | `--udpPort` | DNS UDP port | `53` |
 | `--http` | Enable HTTP on port 80 | `false` |
 | `--cert` | Path to PFX certificate | _(dev cert)_ |

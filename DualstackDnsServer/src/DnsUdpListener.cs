@@ -22,20 +22,34 @@ public class DnsUdpListener : BackgroundService
     public DnsUdpListener(IDnsQueryHandler queryHandler, IConfiguration config, ILogger<DnsUdpListener> logger, ServerOptions serverOptions)
     {
         _serverOptions = serverOptions;
-        string ipString = _serverOptions.Ip;
-        string ipStringV6 = _serverOptions.IpV6;
+        string ipString = string.IsNullOrWhiteSpace(_serverOptions.Ip) ? DnsConst.GetDnsIp() : _serverOptions.Ip;
+        string ipStringV6 = string.IsNullOrWhiteSpace(_serverOptions.IpV6) ? string.Empty : _serverOptions.IpV6;
         int port = _serverOptions.UdpPort;
         this.queryHandler = queryHandler;
         _logger = logger;
 
-        // Best effort dual-stack: bind both IPv4 and IPv6 endpoints
-        var transportV4 = new UdpServerTransport(new IPEndPoint(IPAddress.Parse(ipString), port));
-        var transportV6 = new UdpServerTransport(new IPEndPoint(IPAddress.Parse(ipStringV6), port));
+        var transports = new List<UdpServerTransport>();
 
-        SetUdpSocketBufferSafe(transportV4);
-        SetUdpSocketBufferSafe(transportV6);
+        if (!string.IsNullOrWhiteSpace(ipString))
+        {
+            var transportV4 = new UdpServerTransport(new IPEndPoint(IPAddress.Parse(ipString), port));
+            SetUdpSocketBufferSafe(transportV4);
+            transports.Add(transportV4);
+        }
 
-        udpServer = new DnsServer(transportV4, transportV6);
+        if (!string.IsNullOrWhiteSpace(ipStringV6))
+        {
+            var transportV6 = new UdpServerTransport(new IPEndPoint(IPAddress.Parse(ipStringV6), port));
+            SetUdpSocketBufferSafe(transportV6);
+            transports.Add(transportV6);
+        }
+
+        if (transports.Count == 0)
+        {
+            throw new InvalidOperationException("No valid IP endpoints configured for DNS UDP listener.");
+        }
+
+        udpServer = new DnsServer(transports.ToArray());
         udpServer.QueryReceived += new AsyncEventHandler<QueryReceivedEventArgs>(OnQueryReceived);
     }
 

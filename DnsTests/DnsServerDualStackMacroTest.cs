@@ -19,8 +19,8 @@ namespace DnsTests;
             // Arrange
             string dns_ip_v4 = DnsConst.GetDnsIp(DnsIpMode.Localhost);
             string dns_ip_v6 = DnsConst.GetDnsIpV6(DnsIpMode.Localhost);
-            var httpClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiHttp);
-            var httpClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiHttp);
+            var httpClientV4 = new RestClient(dns_ip_v4, DnsConst.PortHttp);
+            var httpClientV6 = new RestClient(dns_ip_v6, DnsConst.PortHttp);
             // Register both records
             await httpClientV4.RegisterAsync(TestDomain_V4, TestIp_V4, true);
             await httpClientV6.RegisterAsync(TestDomain_V6, TestIp_V6, true);
@@ -30,11 +30,11 @@ namespace DnsTests;
             {
                 Ip = dns_ip_v4,
                 IpV6 = dns_ip_v6,
-                UdpPort = DnsConst.UdpPort
+                UdpPort = DnsConst.PortUdp
             };
             var udpClient = new DnsUdpClientService(serverOptions);
-            var resolvedIpV4 = await udpClient.QueryDnsIPv4Async(dns_ip_v4, TestDomain_V4, DnsConst.UdpPort);
-            var resolvedIpV6 = await udpClient.QueryDnsIPv6Async(dns_ip_v6, TestDomain_V6, DnsConst.UdpPort);
+            var resolvedIpV4 = await udpClient.QueryDnsIPv4Async(dns_ip_v4, TestDomain_V4, DnsConst.PortUdp);
+            var resolvedIpV6 = await udpClient.QueryDnsIPv6Async(dns_ip_v6, TestDomain_V6, DnsConst.PortUdp);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIpV4);
@@ -75,8 +75,8 @@ namespace DnsTests;
 
             string dns_ip_v4 = DnsConst.GetDnsIp(DnsIpMode.Localhost);
             string dns_ip_v6 = DnsConst.GetDnsIpV6(DnsIpMode.Localhost);
-            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.ApiHttp);
-            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.ApiHttp);
+            var dnsClientV4 = new RestClient(dns_ip_v4, DnsConst.PortHttp);
+            var dnsClientV6 = new RestClient(dns_ip_v6, DnsConst.PortHttp);
 
             // Register all records in parallel
             var registerTasks = ipv4Domains.Select(d => dnsClientV4.RegisterAsync(d.domain, d.ip, true))
@@ -87,7 +87,7 @@ namespace DnsTests;
             {
                 Ip = dns_ip_v4,
                 IpV6 = dns_ip_v6,
-                UdpPort = DnsConst.UdpPort
+                UdpPort = DnsConst.PortUdp
             };
             var udpClientV4 = new DnsUdpClientService(serverOptions);
 
@@ -100,7 +100,7 @@ namespace DnsTests;
                     v4Tasks.Add(Task.Run(async () =>
                     {
                         var cts = new CancellationTokenSource(5000);
-                        var resolvedIp = await udpClientV4.QueryDnsIPv4Async(dns_ip_v4, d.domain, DnsConst.UdpPort, cts.Token);
+                        var resolvedIp = await udpClientV4.QueryDnsIPv4Async(dns_ip_v4, d.domain, DnsConst.PortUdp, cts.Token);
                         Assert.Equal(d.ip, resolvedIp);
                     }));
                     //await Task.Delay(1); // 1ms delay between requests
@@ -112,7 +112,7 @@ namespace DnsTests;
                     v6Tasks.Add(Task.Run(async () =>
                     {
                         var cts = new CancellationTokenSource(5000);
-                        var resolvedIp = await udpClientV4.QueryDnsIPv6Async(dns_ip_v6, d.domain, DnsConst.UdpPort, cts.Token);
+                        var resolvedIp = await udpClientV4.QueryDnsIPv6Async(dns_ip_v6, d.domain, DnsConst.PortUdp, cts.Token);
                         Assert.Equal(d.ip.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
                     }));
                     //await Task.Delay(1); // 1ms delay between requests
@@ -173,7 +173,7 @@ namespace DnsTests;
                     : (useV6 ? DnsConst.GetDnsIpV6(DnsIpMode.Localhost) : DnsConst.GetDnsIp(DnsIpMode.Localhost));
                 string testDomain = useV6 ? "dualstack6.local" : "dualstack4.local";
                 string testIp = useV6 ? "fd00::101" : "192.168.1.101";
-                int apiPort = protocol == "https" ? DnsConst.ApiHttps : DnsConst.ApiHttp;
+                int apiPort = protocol == "https" ? DnsConst.PortHttps : DnsConst.PortHttp;
                 var httpClient = new RestClient(dns_host, apiPort, protocol);
 
                 await httpClient.RegisterAsync(testDomain, testIp, true);
@@ -181,15 +181,15 @@ namespace DnsTests;
                 {
                     Ip = dns_host,
                     IpV6 = dns_host,
-                    UdpPort = DnsConst.UdpPort
+                    UdpPort = DnsConst.PortUdp
                 };
                 var udpClient = new DnsUdpClientService(serverOptions);
 
                 string resolvedIp;
                 if (useV6)
-                    resolvedIp = await udpClient.QueryDnsIPv6Async(dns_host, testDomain, DnsConst.UdpPort);
+                    resolvedIp = await udpClient.QueryDnsIPv6Async(dns_host, testDomain, DnsConst.PortUdp);
                 else
-                    resolvedIp = await udpClient.QueryDnsIPv4Async(dns_host, testDomain, DnsConst.UdpPort);
+                    resolvedIp = await udpClient.QueryDnsIPv4Async(dns_host, testDomain, DnsConst.PortUdp);
 
                 if (useV6)
                     Assert.Equal(testIp.ToLowerInvariant(), resolvedIp.ToLowerInvariant());

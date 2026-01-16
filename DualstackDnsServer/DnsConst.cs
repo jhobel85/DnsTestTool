@@ -9,21 +9,40 @@ public static class DnsConst
     public const string FRAMEWORK = "net8.0";
     public const string DncControllerName = "dns";
     public const string DNS_ROOT = "/" + DncControllerName;
-    public const int UdpPort = 53; // use non-privileged port to avoid conflicts with system DNS
-    public const int ApiHttp = 80;
-    public const int ApiHttps = 443;
+    public const int PortUdp = 53; // use non-privileged port to avoid conflicts with system DNS
+    public const int PortHttp = 80;
+    public const int PortHttps = 443;
 
     // Try to increase UDP socket buffer size using reflection (ARSoft.Tools.Net does not expose Socket)
     public const int UDP_BUFFER = 8 * 1024 * 1024; //8MB
 
-    private const string ipKey = "ip";
-    private const string ip6Key = "ip6";
-    private const string apiPortKey = "apiPort";
-    private const string udpPortKey = "udpPort";
+    public const string ipKey = "ip";
+    public const string ip6Key = "ip6";
+
+    public const string httpEnabledKey = "http";
+
+    public const string portHttpKey = "portHttp";
+    public const string portHttpsKey = "portHttps";    
+    public const string portUdpKey = "portUdp";
     public const string certPathKey = "cert";
     public const string certPasswordKey = "certPassw";
+    public static readonly string[] verboseKeys = ["v", "verbose"];    
 
-    private static readonly string[] verboseKeys = ["v", "verbose"];
+    private static HashSet<string> supportedKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ip6Key,
+        ipKey,
+        httpEnabledKey,
+        portHttpKey,
+        portHttpsKey,
+        portUdpKey,
+        certPathKey,
+        certPasswordKey,
+        verboseKeys[0],//v
+        verboseKeys[1]//verbose
+    };
+
+    public static HashSet<string> SupportedKeys { get => supportedKeys; set => supportedKeys = value; }
 
     /// <summary>
     /// Checks if verbose mode is enabled in configuration (supports --v or --verbose)
@@ -73,7 +92,7 @@ public static class DnsConst
     /// </summary>
     public static bool IsHttpEnabled(IConfiguration config, string[] args)
     {
-        var httpValue = config["http"];
+        var httpValue = config[httpEnabledKey];
         if (httpValue != null)
         {
             // If --http is present with no value, treat as true
@@ -104,8 +123,9 @@ public static class DnsConst
         {
             DnsIpMode.Any => "::",
             DnsIpMode.Localhost => "::1",
-            DnsIpMode.Custom => config?[ip6Key] ?? "::1",
-            _ => "::1"
+            // Default to disabled (empty) unless explicitly provided via --ip6
+            DnsIpMode.Custom => config?[ip6Key] ?? string.Empty,
+            _ => string.Empty
         };
     }
 
@@ -132,8 +152,18 @@ public static class DnsConst
         return GetDnsIpV6(DnsIpMode.Custom, config);
     }
 
-    public static string ResolveApiPort(IConfigurationRoot config) => config[apiPortKey] ?? ApiHttps.ToString();
-    public static string ResolveUdpPort(IConfiguration config) => config[udpPortKey] ?? UdpPort.ToString();
+    public static string ResolveHttpsPort(IConfigurationRoot config)
+    {
+        // Prefer explicit HTTPS port, otherwise default 443
+        return config[portHttpsKey]
+            ?? PortHttps.ToString();
+    }
+
+    public static string ResolveHttpPort(IConfiguration config)
+    {
+        return config[portHttpKey] ?? PortHttp.ToString();
+    }
+    public static string ResolveUdpPort(IConfiguration config) => config[portUdpKey] ?? PortUdp.ToString();
 
     
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S4423", Justification = "HTTP is used only for local development and testing; HTTPS is enforced in production.")]
@@ -141,7 +171,7 @@ public static class DnsConst
     {
 #pragma warning disable S4423 // HTTP is used only for local development and testing; HTTPS is enforced in production.
         string ipRes = ResolveDnsIp(config);
-        return $"http://{ipRes}:{ApiHttp}";
+        return $"http://{ipRes}:{PortHttp}";
 #pragma warning restore S4423
     }
 
@@ -150,7 +180,7 @@ public static class DnsConst
     {
 #pragma warning disable S4423 // HTTP is used only for local development and testing; HTTPS is enforced in production.
     string ipRes = ResolveDnsIpV6(config);
-    return $"http://[{ipRes}]:{ApiHttp}";
+    return $"http://[{ipRes}]:{PortHttp}";
 #pragma warning restore S4423
     }
 
@@ -158,6 +188,6 @@ public static class DnsConst
     public static string ResolveHttpsUrlV6(IConfigurationRoot config)
     {
         string ipRes = ResolveDnsIpV6(config);
-        return $"https://[{ipRes}]:{ApiHttps}";
+        return $"https://[{ipRes}]:{PortHttps}";
     }
 }

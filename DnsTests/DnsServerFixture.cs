@@ -13,12 +13,14 @@ namespace DualstackDnsServer;
         {
             KillAnyRunningServer(); // before tests
             // Wait for ports to be free before starting
-            WaitForPortToBeFree(DnsConst.UdpPort, DnsConst.GetDnsIp(), 20000);
-            WaitForPortToBeFree(DnsConst.ApiHttp, DnsConst.GetDnsIp(), 20000);
-            WaitForPortToBeFree(DnsConst.UdpPort, DnsConst.GetDnsIpV6(), 20000);
-            WaitForPortToBeFree(DnsConst.ApiHttp, DnsConst.GetDnsIpV6(), 20000);
+            WaitForPortToBeFree(DnsConst.PortUdp, DnsConst.GetDnsIp(), 20000);
+            WaitForPortToBeFree(DnsConst.PortHttp, DnsConst.GetDnsIp(), 20000);
+            WaitForPortToBeFree(DnsConst.PortHttps, DnsConst.GetDnsIp(), 20000);
+            WaitForPortToBeFree(DnsConst.PortUdp, DnsConst.GetDnsIpV6(), 20000);
+            WaitForPortToBeFree(DnsConst.PortHttp, DnsConst.GetDnsIpV6(), 20000);
+            WaitForPortToBeFree(DnsConst.PortHttps, DnsConst.GetDnsIpV6(), 20000);
             // Always start with HTTP enabled for tests            
-            serverManager.StartDnsServer(DnsConst.GetDnsIp(), DnsConst.GetDnsIpV6(), DnsConst.ApiHttp, DnsConst.UdpPort, true);
+            serverManager.StartDnsServer(DnsConst.GetDnsIp(), DnsConst.GetDnsIpV6(), DnsConst.PortHttps, DnsConst.PortHttp, DnsConst.PortUdp, true);
         }
 
 private void KillAnyRunningServer()
@@ -30,15 +32,19 @@ private void KillAnyRunningServer()
         try { proc.Kill(); proc.WaitForExit(); } catch { }
     }
 
-    processManager.KillAllServers(DnsConst.UdpPort, DnsConst.GetDnsIp());
-    processManager.KillAllServers(DnsConst.ApiHttp, DnsConst.GetDnsIp());
-    processManager.KillAllServers(DnsConst.UdpPort, DnsConst.GetDnsIpV6());
-    processManager.KillAllServers(DnsConst.ApiHttp, DnsConst.GetDnsIpV6());
+    processManager.KillAllServers(DnsConst.PortUdp, DnsConst.GetDnsIp());
+    processManager.KillAllServers(DnsConst.PortHttp, DnsConst.GetDnsIp());
+    processManager.KillAllServers(DnsConst.PortHttps, DnsConst.GetDnsIp());
+    processManager.KillAllServers(DnsConst.PortUdp, DnsConst.GetDnsIpV6());
+    processManager.KillAllServers(DnsConst.PortHttp, DnsConst.GetDnsIpV6());
+    processManager.KillAllServers(DnsConst.PortHttps, DnsConst.GetDnsIpV6());
 
-    WaitForPortToBeFree(DnsConst.UdpPort, DnsConst.GetDnsIp(), 60000);
-    WaitForPortToBeFree(DnsConst.ApiHttp, DnsConst.GetDnsIp(), 60000);
-    WaitForPortToBeFree(DnsConst.UdpPort, DnsConst.GetDnsIpV6(), 60000);
-    WaitForPortToBeFree(DnsConst.ApiHttp, DnsConst.GetDnsIpV6(), 60000);
+    WaitForPortToBeFree(DnsConst.PortUdp, DnsConst.GetDnsIp(), 60000);
+    WaitForPortToBeFree(DnsConst.PortHttp, DnsConst.GetDnsIp(), 60000);
+    WaitForPortToBeFree(DnsConst.PortHttps, DnsConst.GetDnsIp(), 60000);
+    WaitForPortToBeFree(DnsConst.PortUdp, DnsConst.GetDnsIpV6(), 60000);
+    WaitForPortToBeFree(DnsConst.PortHttp, DnsConst.GetDnsIpV6(), 60000);
+    WaitForPortToBeFree(DnsConst.PortHttps, DnsConst.GetDnsIpV6(), 60000);
 }
 
         public void Dispose()

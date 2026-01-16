@@ -13,20 +13,20 @@ public class ServerManager : IServerManager
         var ip6 = GetDnsIpV6(DnsIpMode.Localhost, null);
         bool enabled = DEFAULT_ENABLE_HTTP;
         Console.WriteLine($"[DEBUG] DEFAULT_ENABLE_HTTP at test startup: {enabled}");
-        StartDnsServer(serverExe, ip, ip6, ApiHttp, UdpPort, enabled);
+        StartDnsServer(serverExe, ip, ip6, PortHttps, PortHttp, PortUdp, enabled);
     }
 
 
-    public void StartDnsServer(string ip, string ip6, int apiPort, int udpPort, bool httpEnabled, string? cert = null, string? certPass = null)
+    public void StartDnsServer(string ip, string ip6, int httpsPort, int httpPort, int udpPort, bool httpEnabled, string? cert = null, string? certPass = null)
     {
         string root = GetSolutionRoot();
         var serverExe = GetServerExecutablePath(root);
-        StartDnsServer(serverExe, ip, ip6, apiPort, udpPort, httpEnabled, cert, certPass);
+        StartDnsServer(serverExe, ip, ip6, httpsPort, httpPort, udpPort, httpEnabled, cert, certPass);
     }
 
-    public void StartDnsServer(string serverExe, string ip, string ip6, int apiPort, int udpPort, bool httpEnabled, string? cert = null, string? certPass = null)
+    public void StartDnsServer(string serverExe, string ip, string ip6, int httpsPort, int httpPort, int udpPort, bool httpEnabled, string? cert = null, string? certPass = null)
     {
-        var args = $"--ip {ip} --ip6 {ip6} --apiPort {apiPort} --udpPort {udpPort} --http {httpEnabled}";
+        var args = $"--ip {ip} --ip6 {ip6} --portHttps {httpsPort} --portHttp {httpPort} --udpPort {udpPort} --http {httpEnabled}";
         if (!string.IsNullOrEmpty(cert))
         {
             args += $" --cert {cert}";

@@ -4,7 +4,9 @@ public class ServerOptions
 {
     public string Ip { get; set; } = "";// can also be hostname e.g. , localhost or ::1
     public string IpV6 { get; set; } = "";// can also be hostname e.g. , localhost or ::1
-    public int ApiPort { get; set; }
+    public int ApiPort { get; set; } // legacy alias for HTTPS port
+    public int HttpsPort { get; set; }
+    public int HttpPort { get; set; }
     public int UdpPort { get; set; }
     public string CertPath { get; set; } = "";
     public string CertPassword { get; set; } = "";

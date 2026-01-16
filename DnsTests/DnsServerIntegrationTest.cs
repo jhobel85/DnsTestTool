@@ -22,17 +22,17 @@ namespace DnsTests;
         {
             // Arrange: Register domain (assumes server is already running via fixture)
             string dns_ip = DnsConst.GetDnsIp();
-            var httpClient = new RestClient(dns_ip, DnsConst.ApiHttp);
+            var httpClient = new RestClient(dns_ip, DnsConst.PortHttp);
             await httpClient.RegisterAsync(TestDomain_V4, TestIp_V4, true);
             // Act: Send DNS query
             var serverOptions = new ServerOptions
             {
                 Ip = dns_ip,
                 IpV6 = string.Empty,
-                UdpPort = DnsConst.UdpPort
+                UdpPort = DnsConst.PortUdp
             };
             var udpClient = new DnsUdpClientService(serverOptions);
-            var resolvedIp = await udpClient.QueryDnsIPv4Async(dns_ip, TestDomain_V4, DnsConst.UdpPort);
+            var resolvedIp = await udpClient.QueryDnsIPv4Async(dns_ip, TestDomain_V4, DnsConst.PortUdp);
 
             // Assert
             Assert.Equal(TestIp_V4, resolvedIp);
@@ -43,7 +43,7 @@ namespace DnsTests;
         {
             // Arrange: Register domain (assumes server is already running via fixture)
             string dns_ip = DnsConst.GetDnsIpV6();
-            var httpClient = new RestClient(dns_ip, DnsConst.ApiHttp);
+            var httpClient = new RestClient(dns_ip, DnsConst.PortHttp);
             await httpClient.RegisterAsync(TestDomain_V6, TestIp_V6, true);
 
             // Act: Send DNS query (AAAA record)
@@ -51,10 +51,10 @@ namespace DnsTests;
             {
                 Ip = string.Empty,
                 IpV6 = dns_ip,
-                UdpPort = DnsConst.UdpPort
+                UdpPort = DnsConst.PortUdp
             };
             var udpClient = new DnsUdpClientService(serverOptions);
-            var resolvedIp = await udpClient.QueryDnsIPv6Async(dns_ip, TestDomain_V6, DnsConst.UdpPort);
+            var resolvedIp = await udpClient.QueryDnsIPv6Async(dns_ip, TestDomain_V6, DnsConst.PortUdp);
 
             // Assert
             Assert.Equal(TestIp_V6.ToLowerInvariant(), resolvedIp.ToLowerInvariant());
