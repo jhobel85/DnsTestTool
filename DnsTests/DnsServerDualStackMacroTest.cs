@@ -1,6 +1,6 @@
 using DnsClient;
 using DualstackDnsServer;
-using DualstackDnsServer.Services;
+using DualstackDnsServer.Client;
 
 
 namespace DnsTests;
@@ -32,7 +32,7 @@ namespace DnsTests;
                 IpV6 = dns_ip_v6,
                 UdpPort = DnsConst.PortUdp
             };
-            var udpClient = new DnsUdpClientService(serverOptions);
+            var udpClient = new DnsUdpClient(serverOptions);
             var resolvedIpV4 = await udpClient.QueryDnsIPv4Async(dns_ip_v4, TestDomain_V4, DnsConst.PortUdp);
             var resolvedIpV6 = await udpClient.QueryDnsIPv6Async(dns_ip_v6, TestDomain_V6, DnsConst.PortUdp);
 
@@ -89,7 +89,7 @@ namespace DnsTests;
                 IpV6 = dns_ip_v6,
                 UdpPort = DnsConst.PortUdp
             };
-            var udpClientV4 = new DnsUdpClientService(serverOptions);
+            var udpClientV4 = new DnsUdpClient(serverOptions);
 
             try
             {
@@ -183,7 +183,7 @@ namespace DnsTests;
                     IpV6 = dns_host,
                     UdpPort = DnsConst.PortUdp
                 };
-                var udpClient = new DnsUdpClientService(serverOptions);
+                var udpClient = new DnsUdpClient(serverOptions);
 
                 string resolvedIp;
                 if (useV6)

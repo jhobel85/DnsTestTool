@@ -1,9 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using System.Threading;
-using System.Net;
-using DualstackDnsServer.Utils;
 using DualstackDnsServer;
+using DualstackDnsServer.Client;
 using DualstackDnsServer.Services;
+using DualstackDnsServer.Utils;
+using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Threading;
 
 namespace DualstackDnsServer.RestApi;
 
@@ -11,11 +12,11 @@ namespace DualstackDnsServer.RestApi;
 [Route("dns/query")]
 public class DnsQueryController : ControllerBase
 {
-    private readonly IDnsUdpClientService _dnsUdpClient;
+    private readonly IDnsUdpClient _dnsUdpClient;
     private readonly ServerOptions? _serverOptions;
     private readonly ILogger<DnsQueryController> _logger;
 
-    public DnsQueryController(IDnsUdpClientService dnsUdpClient, ServerOptions? serverOptions = null)
+    public DnsQueryController(IDnsUdpClient dnsUdpClient, ServerOptions? serverOptions = null)
     {
         _dnsUdpClient = dnsUdpClient;
         _serverOptions = serverOptions;

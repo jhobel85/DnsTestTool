@@ -1,15 +1,16 @@
+using DualstackDnsServer.Services;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace DualstackDnsServer.Services;
+namespace DualstackDnsServer.Client;
 
-public class DnsUdpClientService : IDnsUdpClientService
+public class DnsUdpClient : IDnsUdpClient
 {
     private readonly ServerOptions _serverOptions;
     public const int ClientTimeout = 5000;
 
-    public DnsUdpClientService(ServerOptions serverOptions)
+    public DnsUdpClient(ServerOptions serverOptions)
     {
         _serverOptions = serverOptions;
     }
@@ -105,7 +106,7 @@ public class DnsUdpClientService : IDnsUdpClientService
     private static string ParseAnswer(byte[] response, int desiredType, int expectedLength, Func<IEnumerable<byte>, string> projector)
     {
         if (response.Length < 12) return string.Empty;
-        int anCount = (response[6] << 8) | response[7];
+        int anCount = response[6] << 8 | response[7];
         int ptr = 12;
         // Skip QNAME
         while (ptr < response.Length && response[ptr] != 0) ptr += response[ptr] + 1;

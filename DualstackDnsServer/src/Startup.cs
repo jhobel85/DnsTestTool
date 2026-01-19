@@ -1,5 +1,7 @@
 ﻿#nullable enable
+using DualstackDnsServer.Client;
 using DualstackDnsServer.Services;
+using DualstackDnsServer.Utils;
 
 namespace DualstackDnsServer;
 
@@ -12,7 +14,7 @@ public class Startup
     public static void ConfigureServices(IServiceCollection services)
     {
         // Register UDP DNS client service
-        services.AddSingleton<IDnsUdpClientService, DnsUdpClientService>();
+        services.AddSingleton<IDnsUdpClient, DnsUdpClient>();
         services.AddSingleton<IDnsRecordManger, DnsRecordManger>();
         services.AddSingleton<Utils.IProcessManager, Utils.ProcessManager>();
         services.AddSingleton<Utils.IServerManager, Utils.ServerManager>();

@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using DualstackDnsServer.RestApi;
-using DualstackDnsServer.Services;
-using Org.BouncyCastle.Security;
+using DualstackDnsServer.Client;
 
 namespace DualstackDnsServer;
 
@@ -14,7 +13,7 @@ public class DnsQueryControllerTest
     public async Task Query_ReturnsOk_WhenDomainIsResolved()
     {        
     // Arrange
-        var mockService = new Mock<IDnsUdpClientService>();
+        var mockService = new Mock<DnsUdpClient>();
         mockService.Setup(s => s.QueryDnsAsync("8.8.8.8", "example.com", PORT, QueryType.A, It.IsAny<CancellationToken>()))
             .ReturnsAsync("1.2.3.4");
         var controller = new DnsQueryController(mockService.Object);
@@ -31,7 +30,7 @@ public class DnsQueryControllerTest
     public async Task Query_ReturnsNotFound_WhenNoIpFound()
     {
         // Arrange
-        var mockService = new Mock<IDnsUdpClientService>();
+        var mockService = new Mock<DnsUdpClient>();
         mockService.Setup(s => s.QueryDnsAsync("8.8.8.8", "notfound.com", PORT, QueryType.A, It.IsAny<CancellationToken>()))
             .ReturnsAsync("");
         var controller = new DnsQueryController(mockService.Object);
@@ -47,7 +46,7 @@ public class DnsQueryControllerTest
     public async Task Query_ReturnsBadRequest_WhenDomainMissing()
     {
         // Arrange
-        var mockService = new Mock<IDnsUdpClientService>();
+        var mockService = new Mock<DnsUdpClient>();
         var controller = new DnsQueryController(mockService.Object);
 
         // Act
@@ -63,7 +62,7 @@ public class DnsQueryControllerTest
     public async Task Query_ReturnsBadRequest_WhenDnsServerMissing()
     {
         // Arrange
-        var mockService = new Mock<IDnsUdpClientService>();
+        var mockService = new Mock<DnsUdpClient>();
         var controller = new DnsQueryController(mockService.Object);
 
         // Act
@@ -79,7 +78,7 @@ public class DnsQueryControllerTest
     public async Task Query_ReturnsServerError_OnException()
     {
         // Arrange
-        var mockService = new Mock<IDnsUdpClientService>();
+        var mockService = new Mock<DnsUdpClient>();
         mockService.Setup(s => s.QueryDnsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new System.Exception("fail"));
 

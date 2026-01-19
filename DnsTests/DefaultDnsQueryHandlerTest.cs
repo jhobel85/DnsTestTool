@@ -2,7 +2,7 @@ using Moq;
 using ARSoft.Tools.Net.Dns;
 using Microsoft.Extensions.Logging;
 using ARSoft.Tools.Net;
-using DualstackDnsServer.Services;
+using DualstackDnsServer.Utils;
 
 namespace DualstackDnsServer
 {
